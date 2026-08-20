@@ -1,0 +1,153 @@
+name: Unit Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'version-*'
+      - 'version/*'
+  workflow_dispatch:
+
+jobs:
+  # ===========================================================================
+  # HARDHAT UNIT TESTS - Run Hardhat tests with coverage
+  # ===========================================================================
+  hardhat-tests:
+    name: Hardhat Unit Tests
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@de808b1eea699e761c404bda44ba8f21aba30b2c # v1.3.1
+
+      - name: Compile contracts
+        run: npx hardhat compile
+
+      - name: Run Hardhat unit tests
+        id: hardhat-tests
+        run: |
+          if npx hardhat test ./hardhat/test/unit/*.ts 2>&1 | tee test-output.txt; then
+            echo "tests_passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "tests_passed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: hardhat-test-results
+          path: |
+            test-output.txt
+            test-results.xml
+          retention-days: 7
+
+      - name: Post test results to PR
+        if: always() && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: hardhat-tests
+          message: |
+            ## Hardhat Unit Tests
+
+            ${{ steps.hardhat-tests.outputs.tests_passed == 'true' && 'All tests passed' || 'Some tests failed' }}
+
+            <details>
+            <summary>View details</summary>
+
+            See the workflow run artifacts for full test output.
+
+            </details>
+
+      - name: Fail if tests failed
+        if: steps.hardhat-tests.outputs.tests_passed == 'false'
+        run: exit 1
+
+  # ===========================================================================
+  # FORGE TESTS - Run Foundry/Forge test suite
+  # ===========================================================================
+  forge-tests:
+    name: Forge Tests
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@de808b1eea699e761c404bda44ba8f21aba30b2c # v1.3.1
+
+      - name: Run Forge build
+        id: build
+        run: |
+          forge --version
+          forge build --sizes
+
+      - name: Run Forge tests
+        id: forge-tests
+        run: |
+          if forge test -vv 2>&1 | tee forge-test-output.txt; then
+            echo "tests_passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "tests_passed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: forge-test-results
+          path: forge-test-output.txt
+          retention-days: 7
+
+      - name: Post test results to PR
+        if: always() && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: forge-tests
+          message: |
+            ## Forge Tests
+
+            ${{ steps.forge-tests.outputs.tests_passed == 'true' && 'All tests passed' || 'Some tests failed' }}
+
+            <details>
+            <summary>View details</summary>
+
+            See the workflow run artifacts for full test output.
+
+            </details>
+
+      - name: Fail if tests failed
+        if: steps.forge-tests.outputs.tests_passed == 'false'
+        run: exit 1

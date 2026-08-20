@@ -1,0 +1,8 @@
+{
+  "detectors_to_exclude": "naming-convention,solc-version,pragma,assembly,low-level-calls,similar-names,too-many-digits,constable-states,external-function",
+  "exclude_optimization": true,
+  "filter_paths": "node_modules,lib/forge-std,src/test/,src/rayls-protocol/test-contracts/,src/rayls-protocol/Enygma/Enygma-Payments/EnygmaVerifier,src/rayls-protocol/Enygma/Enygma-Payments/EnygmaDepositToDvpVerifier,src/rayls-protocol/Enygma/Enygma-Payments/EnygmaWithdrawFromDvpVerifier,src/rayls-protocol/Enygma/Enygma-DVP/EnygmaJoinSplitVerifier",
+  "solc_remaps": "@openzeppelin/=node_modules/@openzeppelin/",
+  "compile_force_framework": "foundry",
+  "fail_on": "high"
+}

@@ -1,0 +1,90 @@
+# syntax=docker.io/docker/dockerfile:1.7-labs
+# ^ This is required so that we can use COPY with --exclude flag.
+# More info at https://docs.docker.com/reference/dockerfile/#copy---exclude
+
+# Use a base image that includes Go
+FROM golang:1.24.4-bookworm AS gobuilder
+
+# Install git, required for fetching Go dependencies
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the Go source file(s)
+COPY ./hardhat/tasks/utils/mlkemgen /app
+# Depending on the target OS and architecture, set the appropriate environment variables and build the executable
+# Here, we're building for Linux as an example
+RUN GOOS=linux go build -o mlkemgen main.go
+
+# Stage 1: Dev Environment
+FROM node:22-slim
+
+RUN apt-get update && apt-get install -y \
+    make \
+    bash \
+    curl \
+    jq \
+    python3 \
+    git \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+SHELL ["/bin/bash", "-c"]
+
+ENV SHELL=/bin/bash
+RUN curl -L https://foundry.paradigm.xyz | bash
+RUN source ~/.bashrc
+ENV PATH="~/.foundry/bin:${PATH}"
+RUN foundryup --install v1.4.0
+RUN cp ~/.foundry/bin/* /usr/local/bin/
+
+ARG CUSTOM_UID
+ARG CUSTOM_GID
+ENV CUSTOM_UID=${CUSTOM_UID:-1000}
+ENV CUSTOM_GID=${CUSTOM_GID:-1000}
+
+WORKDIR /parfin/rayls-privacy-contracts
+
+# Copy package.json and package-lock.json to the working directory
+COPY package*.json .
+# Copy ts config
+COPY tsconfig.json .
+
+# Install dependencies
+RUN npm ci
+
+# Compile contracts
+COPY foundry.toml .
+COPY foundry.lock .
+COPY --exclude=src/rayls-protocol-sdk/node_modules src src
+RUN forge install foundry-rs/forge-std --no-git
+RUN forge build
+
+COPY --exclude=node_modules --exclude=bindings --exclude=.openzeppelin --exclude=typechain-types --exclude=cache --exclude=cache_hardhat --exclude=cache_forge --exclude=out --exclude=artifacts --exclude=.env --exclude=src/rayls-protocol-sdk/node_modules --exclude=bin --exclude=src . .
+
+# Sibling dirs on /parfin that the deploy script writes per-participant env
+# files into (e.g. /parfin/rayls-privacy-relayer-api/.A.env). Zero-toolchain
+# stacks (the Rayls CLI) mount a shared compose volume over /parfin, which
+# inherits this skeleton on first use — there are no repo bind mounts there.
+# (Without it the deploy dies with "No such file or directory" at the first
+# env-file append.)
+RUN mkdir -p /parfin/rayls-privacy-relayer-api/contracts /parfin/rayls-privacy-pnh-governance-api/contracts
+
+# Baseline env templates for the sibling services (infra URLs, DB conns, mTLS
+# cert paths, demo auth keys), one per participant A-F. The deploy script
+# appends/overwrites the deploy-specific values (registries, starting blocks)
+# after deployment. In bind-mounted dev stacks (start_dev.sh) these paths are
+# shadowed by the real checkouts and the templates are inert.
+COPY docker/dev/parfin-env-templates/relayer-api/ /parfin/rayls-privacy-relayer-api/
+COPY docker/dev/parfin-env-templates/pnh-governance-api/ /parfin/rayls-privacy-pnh-governance-api/
+
+# Compile contracts (cached), convert forge artifacts to Hardhat v2 format and generate TypeChain typings
+RUN npx hardhat compile
+
+RUN chmod +x /parfin/rayls-privacy-contracts/docker/dev/deploy_contracts.sh
+
+# Copy compiled mlkemgen
+COPY --from=gobuilder /app/mlkemgen /parfin/rayls-privacy-contracts/hardhat/tasks/utils/mlkemgen/mlkemgen
+
+CMD docker/dev/deploy_contracts.sh
