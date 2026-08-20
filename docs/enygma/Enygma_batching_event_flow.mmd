@@ -1,0 +1,74 @@
+graph LR
+    subgraph ":large_blue_circle: SENDER"
+        subgraph "Phase 1"
+            subgraph "PL1[PL (Sender - Phase 1)]"
+                SPL1[PL Burn]
+                SPL2[handleEnygmaCrossTransferBatch]
+            end
+            subgraph "CC1[CC (Sender - Phase 1)]"
+                SCC1[InitiateEnygmaCrossTransferBatch<br/>With Value]
+                SCC2[Proof + TX]
+                SDB1[Insert in History]
+            end
+        end
+        subgraph "Phase 2"
+            subgraph "PL2[PL (Sender - Phase 2)]"
+                SPL3[Finalize EnygmaCrossTransferBatch]
+            end
+            subgraph "CC2[CC (Sender - Phase 2)]"
+                SCC3[InitiateEnygmaCrossTransferBatch<br/>0 Value - Validation TX]
+                SCC4[Proof + TX]
+                SDB2[Insert in History]
+            end
+        end
+    end
+    subgraph ":large_green_circle: RECEIVER"
+        subgraph "CC (Receiver)"
+            RCC1[FinishEnygmaCrossTransferBatch]
+            RCC2{Are we the sender?}
+            RCC3[Skip<br/>We already wrote to DB]
+            RCC4[Process for PL]
+        end
+        subgraph "PL (Receiver)"
+            RPL1[PL Cross Mint]
+            RDB[Insert in History]
+        end
+    end
+    %% Sender Phase 1 Flow
+    SPL1 --> SPL2
+    SPL2 -->|"LogListener PL"| SCC1
+    SCC1 --> SCC2
+    SCC2 --> SDB1
+    %% Trigger Phase 2
+    SDB1 -.->|"End of Phase 1 triggers"| SPL3
+    %% Sender Phase 2 Flow
+    SPL3 -->|"LogListener PL"| SCC3
+    SCC3 --> SCC4
+    SCC4 --> SDB2
+    %% Cross-system communication
+    SDB1 ==>|"Transfer Message"| RCC1
+    SDB2 ==>|"Validation Message"| RCC1
+    %% Receiver Flow
+    RCC1 --> RCC2
+    RCC2 -->|"Yes (we are the sender)"| RCC3
+    RCC2 -->|"No (we are not the sender)"| RCC4
+    RCC4 -->|"LogListener CC"| RPL1
+    RPL1 --> RDB
+    %% Styling
+    classDef plNode fill:#a5d6a7,stroke:#2e7d32,stroke-width:3px,color:#1b5e20
+    classDef ccNode fill:#90caf9,stroke:#1565c0,stroke-width:3px,color:#0d47a1
+    classDef database fill:#ff80ab,stroke:#c51162,stroke-width:4px,color:#880e4f
+    classDef decision fill:#fff59d,stroke:#f9a825,stroke-width:4px,color:#f57f17
+    classDef plBox fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+    classDef ccBox fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
+    classDef phase1 fill:#f5f5f5,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5
+    classDef phase2 fill:#fafafa,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5
+    classDef senderBox fill:#e1f5fe,stroke:#0277bd,stroke-width:4px
+    classDef receiverBox fill:#e8f5e9,stroke:#2e7d32,stroke-width:4px
+    %% Apply node styles based on location
+    class SPL1,SPL2,SPL3,RPL1 plNode
+    class SCC1,SCC2,SCC3,SCC4,RCC1,RCC3,RCC4 ccNode
+    class SDB1,SDB2,RDB database
+    class RCC2 decision
+    class PL1,PL2 plBox
+    class CC1,CC2 ccBox

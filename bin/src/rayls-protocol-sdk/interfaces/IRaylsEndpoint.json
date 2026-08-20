@@ -1,0 +1,2698 @@
+{
+    "contractName": "IRaylsEndpoint",
+    "abi": [
+        {
+            "inputs": [
+                {
+                    "internalType": "bytes32",
+                    "name": "_resourceId",
+                    "type": "bytes32"
+                }
+            ],
+            "name": "getAddressByResourceId",
+            "outputs": [
+                {
+                    "internalType": "address",
+                    "name": "",
+                    "type": "address"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "getChainId",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "string",
+                    "name": "_contractName",
+                    "type": "string"
+                }
+            ],
+            "name": "getCommitChainAddress",
+            "outputs": [
+                {
+                    "internalType": "address",
+                    "name": "",
+                    "type": "address"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "getCommitChainId",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "_srcChainId",
+                    "type": "uint256"
+                }
+            ],
+            "name": "getInboundNonce",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "_dstChainId",
+                    "type": "uint256"
+                }
+            ],
+            "name": "getOutboundNonce",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_executor",
+                    "type": "address"
+                }
+            ],
+            "name": "isTrustedExecutor",
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "_srcChainId",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "address",
+                    "name": "_srcAddress",
+                    "type": "address"
+                },
+                {
+                    "internalType": "address",
+                    "name": "_dstAddress",
+                    "type": "address"
+                },
+                {
+                    "components": [
+                        {
+                            "components": [
+                                {
+                                    "internalType": "bool",
+                                    "name": "valid",
+                                    "type": "bool"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "nonce",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "components": [
+                                        {
+                                            "internalType": "bool",
+                                            "name": "valid",
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "internalType": "enum ResourceDeployType",
+                                            "name": "resourceDeployType",
+                                            "type": "uint8"
+                                        },
+                                        {
+                                            "internalType": "bytes",
+                                            "name": "bytecode",
+                                            "type": "bytes"
+                                        },
+                                        {
+                                            "internalType": "enum RaylsBridgeableERC",
+                                            "name": "factoryTemplate",
+                                            "type": "uint8"
+                                        },
+                                        {
+                                            "internalType": "bytes",
+                                            "name": "initializerParams",
+                                            "type": "bytes"
+                                        }
+                                    ],
+                                    "internalType": "struct NewResourceMetadata",
+                                    "name": "newResourceMetadata",
+                                    "type": "tuple"
+                                },
+                                {
+                                    "internalType": "bytes32",
+                                    "name": "resourceId",
+                                    "type": "bytes32"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "lockData",
+                                    "type": "bytes"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "revertPayloadDataSender",
+                                    "type": "bytes"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "revertPayloadDataReceiver",
+                                    "type": "bytes"
+                                },
+                                {
+                                    "components": [
+                                        {
+                                            "internalType": "enum RaylsBridgeableERC",
+                                            "name": "assetType",
+                                            "type": "uint8"
+                                        },
+                                        {
+                                            "internalType": "uint256",
+                                            "name": "id",
+                                            "type": "uint256"
+                                        },
+                                        {
+                                            "internalType": "address",
+                                            "name": "from",
+                                            "type": "address"
+                                        },
+                                        {
+                                            "internalType": "address",
+                                            "name": "to",
+                                            "type": "address"
+                                        },
+                                        {
+                                            "internalType": "address",
+                                            "name": "tokenAddress",
+                                            "type": "address"
+                                        },
+                                        {
+                                            "internalType": "uint256",
+                                            "name": "amount",
+                                            "type": "uint256"
+                                        }
+                                    ],
+                                    "internalType": "struct BridgedTransferMetadata",
+                                    "name": "transferMetadata",
+                                    "type": "tuple"
+                                },
+                                {
+                                    "internalType": "bool",
+                                    "name": "ignoresNonce",
+                                    "type": "bool"
+                                }
+                            ],
+                            "internalType": "struct RaylsMessageMetadata",
+                            "name": "messageMetadata",
+                            "type": "tuple"
+                        },
+                        {
+                            "internalType": "bytes",
+                            "name": "payload",
+                            "type": "bytes"
+                        }
+                    ],
+                    "internalType": "struct RaylsMessage",
+                    "name": "_raylsMessage",
+                    "type": "tuple"
+                },
+                {
+                    "internalType": "bytes32",
+                    "name": "_messageId",
+                    "type": "bytes32"
+                }
+            ],
+            "name": "receivePayload",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "string",
+                    "name": "_contractName",
+                    "type": "string"
+                },
+                {
+                    "internalType": "address",
+                    "name": "_contractAddressOnCommitChain",
+                    "type": "address"
+                }
+            ],
+            "name": "registerCommitChainAddress",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "bytes32",
+                    "name": "_resourceId",
+                    "type": "bytes32"
+                },
+                {
+                    "internalType": "address",
+                    "name": "_implementationAddress",
+                    "type": "address"
+                }
+            ],
+            "name": "registerResourceId",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "blockNumber",
+                    "type": "uint256"
+                }
+            ],
+            "name": "requestNewDHKeys",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "_dstChainId",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "address",
+                    "name": "_destination",
+                    "type": "address"
+                },
+                {
+                    "internalType": "bytes",
+                    "name": "_payload",
+                    "type": "bytes"
+                }
+            ],
+            "name": "send",
+            "outputs": [
+                {
+                    "internalType": "bytes32",
+                    "name": "messageId",
+                    "type": "bytes32"
+                }
+            ],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "uint256",
+                            "name": "_dstChainId",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "address",
+                            "name": "_destination",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "bytes",
+                            "name": "_payload",
+                            "type": "bytes"
+                        }
+                    ],
+                    "internalType": "struct DestinationPayloadRequest[]",
+                    "name": "_destinationPayloadRequests",
+                    "type": "tuple[]"
+                }
+            ],
+            "name": "sendBatch",
+            "outputs": [
+                {
+                    "internalType": "bytes32",
+                    "name": "batchId",
+                    "type": "bytes32"
+                }
+            ],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "uint256",
+                            "name": "_dstChainId",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "bytes32",
+                            "name": "_resourceId",
+                            "type": "bytes32"
+                        },
+                        {
+                            "internalType": "bytes",
+                            "name": "_payload",
+                            "type": "bytes"
+                        },
+                        {
+                            "internalType": "bytes",
+                            "name": "_lockData",
+                            "type": "bytes"
+                        },
+                        {
+                            "internalType": "bytes",
+                            "name": "_revertDataSender",
+                            "type": "bytes"
+                        },
+                        {
+                            "internalType": "bytes",
+                            "name": "_revertDataReceiver",
+                            "type": "bytes"
+                        },
+                        {
+                            "components": [
+                                {
+                                    "internalType": "enum RaylsBridgeableERC",
+                                    "name": "assetType",
+                                    "type": "uint8"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "id",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "from",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "to",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "tokenAddress",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "amount",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "internalType": "struct BridgedTransferMetadata",
+                            "name": "transferMetadata",
+                            "type": "tuple"
+                        }
+                    ],
+                    "internalType": "struct ResourceIdCompletePayloadRequest[]",
+                    "name": "_resourceIdPayloadRequests",
+                    "type": "tuple[]"
+                }
+            ],
+            "name": "sendBatchToResourceId",
+            "outputs": [
+                {
+                    "internalType": "bytes32",
+                    "name": "batchId",
+                    "type": "bytes32"
+                }
+            ],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "uint256",
+                            "name": "_dstChainId",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "bytes32",
+                            "name": "_resourceId",
+                            "type": "bytes32"
+                        },
+                        {
+                            "internalType": "bytes",
+                            "name": "_payload",
+                            "type": "bytes"
+                        }
+                    ],
+                    "internalType": "struct ResourceIdPayloadRequest[]",
+                    "name": "_resourceIdPayloadRequests",
+                    "type": "tuple[]"
+                }
+            ],
+            "name": "sendBatchToResourceId",
+            "outputs": [
+                {
+                    "internalType": "bytes32",
+                    "name": "batchId",
+                    "type": "bytes32"
+                }
+            ],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "_dstChainId",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "bytes32",
+                    "name": "_resourceId",
+                    "type": "bytes32"
+                },
+                {
+                    "internalType": "bytes",
+                    "name": "_payload",
+                    "type": "bytes"
+                }
+            ],
+            "name": "sendToResourceId",
+            "outputs": [
+                {
+                    "internalType": "bytes32",
+                    "name": "messageId",
+                    "type": "bytes32"
+                }
+            ],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "_dstChainId",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "bytes32",
+                    "name": "_resourceId",
+                    "type": "bytes32"
+                },
+                {
+                    "internalType": "bytes",
+                    "name": "_payload",
+                    "type": "bytes"
+                },
+                {
+                    "internalType": "bytes",
+                    "name": "_lockData",
+                    "type": "bytes"
+                },
+                {
+                    "internalType": "bytes",
+                    "name": "_revertDataPayloadSender",
+                    "type": "bytes"
+                },
+                {
+                    "internalType": "bytes",
+                    "name": "_revertDataPayloadReceiver",
+                    "type": "bytes"
+                },
+                {
+                    "components": [
+                        {
+                            "internalType": "enum RaylsBridgeableERC",
+                            "name": "assetType",
+                            "type": "uint8"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "id",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "address",
+                            "name": "from",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "address",
+                            "name": "to",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "address",
+                            "name": "tokenAddress",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "amount",
+                            "type": "uint256"
+                        }
+                    ],
+                    "internalType": "struct BridgedTransferMetadata",
+                    "name": "transferMetadata",
+                    "type": "tuple"
+                }
+            ],
+            "name": "sendToResourceId",
+            "outputs": [
+                {
+                    "internalType": "bytes32",
+                    "name": "messageId",
+                    "type": "bytes32"
+                }
+            ],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "version",
+            "outputs": [
+                {
+                    "internalType": "string",
+                    "name": "",
+                    "type": "string"
+                }
+            ],
+            "stateMutability": "pure",
+            "type": "function"
+        }
+    ],
+    "metadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_resourceId\",\"type\":\"bytes32\"}],\"name\":\"getAddressByResourceId\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getChainId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_contractName\",\"type\":\"string\"}],\"name\":\"getCommitChainAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCommitChainId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_srcChainId\",\"type\":\"uint256\"}],\"name\":\"getInboundNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dstChainId\",\"type\":\"uint256\"}],\"name\":\"getOutboundNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_executor\",\"type\":\"address\"}],\"name\":\"isTrustedExecutor\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_srcChainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_srcAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_dstAddress\",\"type\":\"address\"},{\"components\":[{\"components\":[{\"internalType\":\"bool\",\"name\":\"valid\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bool\",\"name\":\"valid\",\"type\":\"bool\"},{\"internalType\":\"enum ResourceDeployType\",\"name\":\"resourceDeployType\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"bytecode\",\"type\":\"bytes\"},{\"internalType\":\"enum RaylsBridgeableERC\",\"name\":\"factoryTemplate\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"initializerParams\",\"type\":\"bytes\"}],\"internalType\":\"struct NewResourceMetadata\",\"name\":\"newResourceMetadata\",\"type\":\"tuple\"},{\"internalType\":\"bytes32\",\"name\":\"resourceId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"lockData\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"revertPayloadDataSender\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"revertPayloadDataReceiver\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"enum RaylsBridgeableERC\",\"name\":\"assetType\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct BridgedTransferMetadata\",\"name\":\"transferMetadata\",\"type\":\"tuple\"},{\"internalType\":\"bool\",\"name\":\"ignoresNonce\",\"type\":\"bool\"}],\"internalType\":\"struct RaylsMessageMetadata\",\"name\":\"messageMetadata\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"payload\",\"type\":\"bytes\"}],\"internalType\":\"struct RaylsMessage\",\"name\":\"_raylsMessage\",\"type\":\"tuple\"},{\"internalType\":\"bytes32\",\"name\":\"_messageId\",\"type\":\"bytes32\"}],\"name\":\"receivePayload\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_contractName\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"_contractAddressOnCommitChain\",\"type\":\"address\"}],\"name\":\"registerCommitChainAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_resourceId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"_implementationAddress\",\"type\":\"address\"}],\"name\":\"registerResourceId\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"blockNumber\",\"type\":\"uint256\"}],\"name\":\"requestNewDHKeys\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dstChainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_destination\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_payload\",\"type\":\"bytes\"}],\"name\":\"send\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"messageId\",\"type\":\"bytes32\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"_dstChainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_destination\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_payload\",\"type\":\"bytes\"}],\"internalType\":\"struct DestinationPayloadRequest[]\",\"name\":\"_destinationPayloadRequests\",\"type\":\"tuple[]\"}],\"name\":\"sendBatch\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"batchId\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"_dstChainId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_resourceId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_payload\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_lockData\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_revertDataSender\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_revertDataReceiver\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"enum RaylsBridgeableERC\",\"name\":\"assetType\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct BridgedTransferMetadata\",\"name\":\"transferMetadata\",\"type\":\"tuple\"}],\"internalType\":\"struct ResourceIdCompletePayloadRequest[]\",\"name\":\"_resourceIdPayloadRequests\",\"type\":\"tuple[]\"}],\"name\":\"sendBatchToResourceId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"batchId\",\"type\":\"bytes32\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"_dstChainId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_resourceId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_payload\",\"type\":\"bytes\"}],\"internalType\":\"struct ResourceIdPayloadRequest[]\",\"name\":\"_resourceIdPayloadRequests\",\"type\":\"tuple[]\"}],\"name\":\"sendBatchToResourceId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"batchId\",\"type\":\"bytes32\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dstChainId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_resourceId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_payload\",\"type\":\"bytes\"}],\"name\":\"sendToResourceId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"messageId\",\"type\":\"bytes32\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dstChainId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_resourceId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_payload\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_lockData\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_revertDataPayloadSender\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_revertDataPayloadReceiver\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"enum RaylsBridgeableERC\",\"name\":\"assetType\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct BridgedTransferMetadata\",\"name\":\"transferMetadata\",\"type\":\"tuple\"}],\"name\":\"sendToResourceId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"messageId\",\"type\":\"bytes32\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"getAddressByResourceId(bytes32)\":{\"params\":{\"_resourceId\":\"The identification of the resource.\"}},\"getChainId()\":{\"returns\":{\"_0\":\"The chain ID of this endpoint.\"}},\"getCommitChainAddress(string)\":{\"params\":{\"_contractName\":\"The name of the contract\"}},\"getCommitChainId()\":{\"returns\":{\"_0\":\"The commit chain ID.\"}},\"getInboundNonce(uint256)\":{\"params\":{\"_srcChainId\":\"The source chain identifier.\"},\"returns\":{\"_0\":\"The current inbound nonce value.\"}},\"getOutboundNonce(uint256)\":{\"params\":{\"_dstChainId\":\"The destination chain identifier.\"},\"returns\":{\"_0\":\"The current outbound nonce value.\"}},\"isTrustedExecutor(address)\":{\"params\":{\"_executor\":\"Address to check\"}},\"receivePayload(uint256,address,address,((bool,uint256,(bool,uint8,bytes,uint8,bytes),bytes32,bytes,bytes,bytes,(uint8,uint256,address,address,address,uint256),bool),bytes),bytes32)\":{\"params\":{\"_dstAddress\":\"The address on the destination chain.\",\"_messageId\":\"The unique identifier of the message.\",\"_raylsMessage\":\"A message including RaylsMessageMetadataV1 to do validations like nonce and also the metadata\",\"_srcAddress\":\"The source contract address (as bytes) on the source chain.\",\"_srcChainId\":\"The source chain identifier.\"}},\"registerCommitChainAddress(string,address)\":{\"params\":{\"_contractAddressOnCommitChain\":\"The name of the contract\",\"_contractName\":\"The name of the contract\"}},\"registerResourceId(bytes32,address)\":{\"params\":{\"_implementationAddress\":\"The address where the resource was implemented\",\"_resourceId\":\"The identification of the resource\"}},\"send(uint256,address,bytes)\":{\"params\":{\"_destination\":\"The address on the destination chain.\",\"_dstChainId\":\"The destination chain identifier.\",\"_payload\":\"The verified payload to send to the destination contract.\"}},\"sendBatch((uint256,address,bytes)[])\":{\"params\":{\"_destinationPayloadRequests\":\"The payloads to send to the destination contract.\"}},\"sendBatchToResourceId((uint256,bytes32,bytes)[])\":{\"params\":{\"_resourceIdPayloadRequests\":\"The verified payloads to send to the destination contract.\"}},\"sendBatchToResourceId((uint256,bytes32,bytes,bytes,bytes,bytes,(uint8,uint256,address,address,address,uint256))[])\":{\"params\":{\"_resourceIdPayloadRequests\":\"The verified payloads to send to the destination contract.\"}},\"sendToResourceId(uint256,bytes32,bytes)\":{\"params\":{\"_dstChainId\":\"The destination chain identifier.\",\"_payload\":\"The verified payload to send to the destination contract.\",\"_resourceId\":\"The id of the resource on the destination chain.\"}},\"sendToResourceId(uint256,bytes32,bytes,bytes,bytes,bytes,(uint8,uint256,address,address,address,uint256))\":{\"params\":{\"_dstChainId\":\"The destination chain identifier.\",\"_lockData\":\"The lockData\",\"_payload\":\"The verified payload to send to the destination contract.\",\"_resourceId\":\"The id of the resource on the destination chain.\",\"_revertDataPayloadReceiver\":\"The revertData for the receiver chainId\",\"_revertDataPayloadSender\":\"The revertData for the sender chainId\"}},\"version()\":{\"returns\":{\"_0\":\"The protocol version.\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"getAddressByResourceId(bytes32)\":{\"notice\":\"Retrieves the address of the contract that implements the resource.\"},\"getChainId()\":{\"notice\":\"Retrieves the immutable chain identifier of this Endpoint.         This identifier is unique in the context of multi-chain interactions.\"},\"getCommitChainAddress(string)\":{\"notice\":\"Gets a contract address from commit chain by it's name\"},\"getCommitChainId()\":{\"notice\":\"Retrieves the immutable commit chain id .         This identifier is unique in the context of multi-chain interactions.\"},\"getInboundNonce(uint256)\":{\"notice\":\"Retrieves the inboundNonce for a receiving address from a source chain, which could be EVM or non-EVM.         The nonce is used to track the order of messages received from a specific chain/source.\"},\"getOutboundNonce(uint256)\":{\"notice\":\"Retrieves the outboundNonce for messages sent from this chain, which is always an EVM chain.         The nonce is useful for maintaining the order of sent messages and for audit purposes.\"},\"isTrustedExecutor(address)\":{\"notice\":\"Check if is a trusted executor address.\"},\"receivePayload(uint256,address,address,((bool,uint256,(bool,uint8,bytes,uint8,bytes),bytes32,bytes,bytes,bytes,(uint8,uint256,address,address,address,uint256),bool),bytes),bytes32)\":{\"notice\":\"Used by the messaging library to publish a verified payload to the destination contract.         Typically called by other contracts or endpoints on the same chain.         Ensures message integrity and ordering using the nonce and messageId.\"},\"registerCommitChainAddress(string,address)\":{\"notice\":\"Register a contract address from commit chain to be queried internally by the contracts\"},\"registerResourceId(bytes32,address)\":{\"notice\":\"Associates an address to a resourceId\"},\"requestNewDHKeys(uint256)\":{\"notice\":\"Triggers the protocol DH key update.\"},\"send(uint256,address,bytes)\":{\"notice\":\"Sends a Rayls message to the specified address at a Rayls endpoint.         Use this method for single message transactions. Ensure the payload format         and gas limits meet the requirements of the destination chain and contract.\"},\"sendBatch((uint256,address,bytes)[])\":{\"notice\":\"Sends a Rayls message to the specified address at a Rayls endpoint.         Use this method for multiple message transactions. Ensure the payload format         and gas limits meet the requirements of the destination chain and contract.\"},\"sendBatchToResourceId((uint256,bytes32,bytes)[])\":{\"notice\":\"Sends Rayls messages to the specified resource at a Rayls endpoint.         A resourceId is an identification of a resource across multiple chains. So         instead of calling the destination address, you can call by the resourceId.         Use this method for multiple message transactions. Ensure the payload format         and gas limits meet the requirements of the destination chain and contract.\"},\"sendBatchToResourceId((uint256,bytes32,bytes,bytes,bytes,bytes,(uint8,uint256,address,address,address,uint256))[])\":{\"notice\":\"Sends Rayls messages to the specified resource at a Rayls endpoint.         A resourceId is an identification of a resource across multiple chains. So         instead of calling the destination address, you can call by the resourceId.         Use this method for multiple message transactions. Ensure the payload format         and gas limits meet the requirements of the destination chain and contract.\"},\"sendToResourceId(uint256,bytes32,bytes)\":{\"notice\":\"Sends a Rayls message to the specified resource at a Rayls endpoint.         A resourceId is an identification of a resource across multiple chains. So         instead of calling the destination address, you can call by the resourceId.         Use this method for single message transactions. Ensure the payload format         and gas limits meet the requirements of the destination chain and contract.\"},\"sendToResourceId(uint256,bytes32,bytes,bytes,bytes,bytes,(uint8,uint256,address,address,address,uint256))\":{\"notice\":\"Sends a Rayls message to the specified resource at a Rayls endpoint.         A resourceId is an identification of a resource across multiple chains. So         instead of calling the destination address, you can call by the resourceId.         Use this method for single message transactions. Ensure the payload format         and gas limits meet the requirements of the destination chain and contract.\"},\"version()\":{\"notice\":\"Retrieves the protocol version.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/home/nuno/Parfin/rayls-contracts/src/rayls-protocol-sdk/interfaces/IRaylsEndpoint.sol\":\"IRaylsEndpoint\"},\"evmVersion\":\"cancun\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"/home/nuno/Parfin/rayls-contracts/src/rayls-protocol-sdk/RaylsMessage.sol\":{\"keccak256\":\"0x48c40ae799ef2a2b655015827954ddbc851b8ebc43a3febca33fb5154a16c469\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://94765f80068b19ca61b7d463f07a6c5f395747959efd55529a4e023ed14d4b55\",\"dweb:/ipfs/QmYUFPzLtMNhwjKwnUzjf465jVhhxpLzpLTJqpiYduGhuK\"]},\"/home/nuno/Parfin/rayls-contracts/src/rayls-protocol-sdk/interfaces/IRaylsEndpoint.sol\":{\"keccak256\":\"0xefee91dde6b2577eeec897e06ee8711d3336f60a820f4848f5ac0bd075834584\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://8ad5b93bd24a4283686d2b1b26114192ec3fc9f70b2fd2ada9b6ebfd6a13eac1\",\"dweb:/ipfs/QmTprJHfUQzUNiwof5tYmKrBXNXsbLb66rLYFNNzG8Azid\"]},\"/home/nuno/Parfin/rayls-contracts/src/rayls-protocol-sdk/interfaces/IRaylsMessageExecutor.sol\":{\"keccak256\":\"0x0de9d24bd52e70dca121d5898cd26d2141e480c51ec573a635e4038a7152ee17\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://f07bb2e4f4c24feb008d213722032fa7b980b74ea77e847f2d66b258d3fbc528\",\"dweb:/ipfs/QmS9QyDdsSFRBerK38aSh1rExVfk1R7oiwQu61uoBCL1tR\"]},\"/home/nuno/Parfin/rayls-contracts/src/rayls-protocol-sdk/libraries/MessageLib.sol\":{\"keccak256\":\"0xd499300ba58874b0e8b2512deed5c113f6a84f41eb10033d45c66d5f5e38bc1a\",\"license\":\"GPL-3.0\",\"urls\":[\"bzz-raw://9ad9a3b1e2ede1427d36685b53e0b87183c915b8ef102cc1c70e99d1f6c10caa\",\"dweb:/ipfs/QmRoxKnC2qLBEkcaz9fLPqsRGkr5zfcKGY4D3VtrpwkNLH\"]}},\"version\":1}",
+    "bytecode": "",
+    "deployedBytecode": "",
+    "sourceMap": "",
+    "deployedSourceMap": "",
+    "sourcePath": "/home/nuno/Parfin/rayls-contracts/src/rayls-protocol-sdk/interfaces/IRaylsEndpoint.sol",
+    "compiler": {
+        "name": "solc",
+        "version": "0.8.28+commit.7893614a"
+    },
+    "ast": {
+        "absolutePath": "/home/nuno/Parfin/rayls-contracts/src/rayls-protocol-sdk/interfaces/IRaylsEndpoint.sol",
+        "exportedSymbols": {
+            "BridgedTransferMetadata": [
+                55
+            ],
+            "DestinationPayloadRequest": [
+                625
+            ],
+            "IRaylsEndpoint": [
+                237
+            ],
+            "IRaylsMessageExecutor": [
+                276
+            ],
+            "MessageLib": [
+                597
+            ],
+            "NewResourceMetadata": [
+                41
+            ],
+            "RaylsBridgeableERC": [
+                62
+            ],
+            "RaylsMessage": [
+                7
+            ],
+            "RaylsMessageMetadata": [
+                28
+            ],
+            "ResourceDeployType": [
+                58
+            ],
+            "ResourceIdCompletePayloadRequest": [
+                648
+            ],
+            "ResourceIdPayloadRequest": [
+                632
+            ],
+            "SendRequest": [
+                618
+            ]
+        },
+        "id": 238,
+        "license": "UNLICENSED",
+        "nodeType": "SourceUnit",
+        "nodes": [
+            {
+                "id": 64,
+                "literals": [
+                    "solidity",
+                    "^",
+                    "0.8",
+                    ".20"
+                ],
+                "nodeType": "PragmaDirective",
+                "src": "39:24:1"
+            },
+            {
+                "absolutePath": "/home/nuno/Parfin/rayls-contracts/src/rayls-protocol-sdk/RaylsMessage.sol",
+                "file": "../RaylsMessage.sol",
+                "id": 65,
+                "nameLocation": "-1:-1:-1",
+                "nodeType": "ImportDirective",
+                "scope": 238,
+                "sourceUnit": 63,
+                "src": "65:29:1",
+                "symbolAliases": [],
+                "unitAlias": ""
+            },
+            {
+                "absolutePath": "/home/nuno/Parfin/rayls-contracts/src/rayls-protocol-sdk/libraries/MessageLib.sol",
+                "file": "../libraries/MessageLib.sol",
+                "id": 66,
+                "nameLocation": "-1:-1:-1",
+                "nodeType": "ImportDirective",
+                "scope": 238,
+                "sourceUnit": 649,
+                "src": "95:37:1",
+                "symbolAliases": [],
+                "unitAlias": ""
+            },
+            {
+                "abstract": false,
+                "baseContracts": [],
+                "canonicalName": "IRaylsEndpoint",
+                "contractDependencies": [],
+                "contractKind": "interface",
+                "fullyImplemented": false,
+                "id": 237,
+                "linearizedBaseContracts": [
+                    237
+                ],
+                "name": "IRaylsEndpoint",
+                "nameLocation": "144:14:1",
+                "nodeType": "ContractDefinition",
+                "nodes": [
+                    {
+                        "documentation": {
+                            "id": 67,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "165:163:1",
+                            "text": " @notice Retrieves the address of the contract that implements the resource.\n @param _resourceId The identification of the resource."
+                        },
+                        "functionSelector": "11f50c85",
+                        "id": 74,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "getAddressByResourceId",
+                        "nameLocation": "342:22:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 70,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 69,
+                                    "mutability": "mutable",
+                                    "name": "_resourceId",
+                                    "nameLocation": "373:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 74,
+                                    "src": "365:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes32",
+                                        "typeString": "bytes32"
+                                    },
+                                    "typeName": {
+                                        "id": 68,
+                                        "name": "bytes32",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "365:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes32",
+                                            "typeString": "bytes32"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "364:21:1"
+                        },
+                        "returnParameters": {
+                            "id": 73,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 72,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 74,
+                                    "src": "409:7:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 71,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "409:7:1",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "408:9:1"
+                        },
+                        "scope": 237,
+                        "src": "333:85:1",
+                        "stateMutability": "view",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 75,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "424:481:1",
+                            "text": " @notice Sends a Rayls message to the specified address at a Rayls endpoint.\n         Use this method for single message transactions. Ensure the payload format\n         and gas limits meet the requirements of the destination chain and contract.\n @param _dstChainId The destination chain identifier.\n @param _destination The address on the destination chain.\n @param _payload The verified payload to send to the destination contract."
+                        },
+                        "functionSelector": "150b375f",
+                        "id": 86,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "send",
+                        "nameLocation": "919:4:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 82,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 77,
+                                    "mutability": "mutable",
+                                    "name": "_dstChainId",
+                                    "nameLocation": "932:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 86,
+                                    "src": "924:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 76,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "924:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 79,
+                                    "mutability": "mutable",
+                                    "name": "_destination",
+                                    "nameLocation": "953:12:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 86,
+                                    "src": "945:20:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 78,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "945:7:1",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 81,
+                                    "mutability": "mutable",
+                                    "name": "_payload",
+                                    "nameLocation": "982:8:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 86,
+                                    "src": "967:23:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "calldata",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes_calldata_ptr",
+                                        "typeString": "bytes"
+                                    },
+                                    "typeName": {
+                                        "id": 80,
+                                        "name": "bytes",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "967:5:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes_storage_ptr",
+                                            "typeString": "bytes"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "923:68:1"
+                        },
+                        "returnParameters": {
+                            "id": 85,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 84,
+                                    "mutability": "mutable",
+                                    "name": "messageId",
+                                    "nameLocation": "1050:9:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 86,
+                                    "src": "1042:17:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes32",
+                                        "typeString": "bytes32"
+                                    },
+                                    "typeName": {
+                                        "id": 83,
+                                        "name": "bytes32",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1042:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes32",
+                                            "typeString": "bytes32"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1041:19:1"
+                        },
+                        "scope": 237,
+                        "src": "910:151:1",
+                        "stateMutability": "payable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 87,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "1067:369:1",
+                            "text": " @notice Sends a Rayls message to the specified address at a Rayls endpoint.\n         Use this method for multiple message transactions. Ensure the payload format\n         and gas limits meet the requirements of the destination chain and contract.\n @param _destinationPayloadRequests The payloads to send to the destination contract."
+                        },
+                        "functionSelector": "407fa89e",
+                        "id": 96,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "sendBatch",
+                        "nameLocation": "1450:9:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 92,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 91,
+                                    "mutability": "mutable",
+                                    "name": "_destinationPayloadRequests",
+                                    "nameLocation": "1497:27:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 96,
+                                    "src": "1460:64:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "calldata",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_array$_t_struct$_DestinationPayloadRequest_$625_calldata_ptr_$dyn_calldata_ptr",
+                                        "typeString": "struct DestinationPayloadRequest[]"
+                                    },
+                                    "typeName": {
+                                        "baseType": {
+                                            "id": 89,
+                                            "nodeType": "UserDefinedTypeName",
+                                            "pathNode": {
+                                                "id": 88,
+                                                "name": "DestinationPayloadRequest",
+                                                "nameLocations": [
+                                                    "1460:25:1"
+                                                ],
+                                                "nodeType": "IdentifierPath",
+                                                "referencedDeclaration": 625,
+                                                "src": "1460:25:1"
+                                            },
+                                            "referencedDeclaration": 625,
+                                            "src": "1460:25:1",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_DestinationPayloadRequest_$625_storage_ptr",
+                                                "typeString": "struct DestinationPayloadRequest"
+                                            }
+                                        },
+                                        "id": 90,
+                                        "nodeType": "ArrayTypeName",
+                                        "src": "1460:27:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_array$_t_struct$_DestinationPayloadRequest_$625_storage_$dyn_storage_ptr",
+                                            "typeString": "struct DestinationPayloadRequest[]"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1459:66:1"
+                        },
+                        "returnParameters": {
+                            "id": 95,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 94,
+                                    "mutability": "mutable",
+                                    "name": "batchId",
+                                    "nameLocation": "1568:7:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 96,
+                                    "src": "1560:15:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes32",
+                                        "typeString": "bytes32"
+                                    },
+                                    "typeName": {
+                                        "id": 93,
+                                        "name": "bytes32",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1560:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes32",
+                                            "typeString": "bytes32"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1559:17:1"
+                        },
+                        "scope": 237,
+                        "src": "1441:136:1",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 97,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "1583:673:1",
+                            "text": " @notice Sends a Rayls message to the specified resource at a Rayls endpoint.\n         A resourceId is an identification of a resource across multiple chains. So\n         instead of calling the destination address, you can call by the resourceId.\n         Use this method for single message transactions. Ensure the payload format\n         and gas limits meet the requirements of the destination chain and contract.\n @param _dstChainId The destination chain identifier.\n @param _resourceId The id of the resource on the destination chain.\n @param _payload The verified payload to send to the destination contract."
+                        },
+                        "functionSelector": "40b33bfa",
+                        "id": 108,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "sendToResourceId",
+                        "nameLocation": "2270:16:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 104,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 99,
+                                    "mutability": "mutable",
+                                    "name": "_dstChainId",
+                                    "nameLocation": "2295:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 108,
+                                    "src": "2287:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 98,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2287:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 101,
+                                    "mutability": "mutable",
+                                    "name": "_resourceId",
+                                    "nameLocation": "2316:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 108,
+                                    "src": "2308:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes32",
+                                        "typeString": "bytes32"
+                                    },
+                                    "typeName": {
+                                        "id": 100,
+                                        "name": "bytes32",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2308:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes32",
+                                            "typeString": "bytes32"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 103,
+                                    "mutability": "mutable",
+                                    "name": "_payload",
+                                    "nameLocation": "2344:8:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 108,
+                                    "src": "2329:23:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "calldata",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes_calldata_ptr",
+                                        "typeString": "bytes"
+                                    },
+                                    "typeName": {
+                                        "id": 102,
+                                        "name": "bytes",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2329:5:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes_storage_ptr",
+                                            "typeString": "bytes"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "2286:67:1"
+                        },
+                        "returnParameters": {
+                            "id": 107,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 106,
+                                    "mutability": "mutable",
+                                    "name": "messageId",
+                                    "nameLocation": "2412:9:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 108,
+                                    "src": "2404:17:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes32",
+                                        "typeString": "bytes32"
+                                    },
+                                    "typeName": {
+                                        "id": 105,
+                                        "name": "bytes32",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2404:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes32",
+                                            "typeString": "bytes32"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "2403:19:1"
+                        },
+                        "scope": 237,
+                        "src": "2261:162:1",
+                        "stateMutability": "payable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 109,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "2429:558:1",
+                            "text": " @notice Sends Rayls messages to the specified resource at a Rayls endpoint.\n         A resourceId is an identification of a resource across multiple chains. So\n         instead of calling the destination address, you can call by the resourceId.\n         Use this method for multiple message transactions. Ensure the payload format\n         and gas limits meet the requirements of the destination chain and contract.\n @param _resourceIdPayloadRequests The verified payloads to send to the destination contract."
+                        },
+                        "functionSelector": "b2958e9a",
+                        "id": 118,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "sendBatchToResourceId",
+                        "nameLocation": "3001:21:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 114,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 113,
+                                    "mutability": "mutable",
+                                    "name": "_resourceIdPayloadRequests",
+                                    "nameLocation": "3059:26:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 118,
+                                    "src": "3023:62:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "calldata",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_array$_t_struct$_ResourceIdPayloadRequest_$632_calldata_ptr_$dyn_calldata_ptr",
+                                        "typeString": "struct ResourceIdPayloadRequest[]"
+                                    },
+                                    "typeName": {
+                                        "baseType": {
+                                            "id": 111,
+                                            "nodeType": "UserDefinedTypeName",
+                                            "pathNode": {
+                                                "id": 110,
+                                                "name": "ResourceIdPayloadRequest",
+                                                "nameLocations": [
+                                                    "3023:24:1"
+                                                ],
+                                                "nodeType": "IdentifierPath",
+                                                "referencedDeclaration": 632,
+                                                "src": "3023:24:1"
+                                            },
+                                            "referencedDeclaration": 632,
+                                            "src": "3023:24:1",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_ResourceIdPayloadRequest_$632_storage_ptr",
+                                                "typeString": "struct ResourceIdPayloadRequest"
+                                            }
+                                        },
+                                        "id": 112,
+                                        "nodeType": "ArrayTypeName",
+                                        "src": "3023:26:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_array$_t_struct$_ResourceIdPayloadRequest_$632_storage_$dyn_storage_ptr",
+                                            "typeString": "struct ResourceIdPayloadRequest[]"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "3022:64:1"
+                        },
+                        "returnParameters": {
+                            "id": 117,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 116,
+                                    "mutability": "mutable",
+                                    "name": "batchId",
+                                    "nameLocation": "3130:7:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 118,
+                                    "src": "3122:15:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes32",
+                                        "typeString": "bytes32"
+                                    },
+                                    "typeName": {
+                                        "id": 115,
+                                        "name": "bytes32",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "3122:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes32",
+                                            "typeString": "bytes32"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "3121:17:1"
+                        },
+                        "scope": 237,
+                        "src": "2992:147:1",
+                        "stateMutability": "payable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 119,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "3145:868:1",
+                            "text": " @notice Sends a Rayls message to the specified resource at a Rayls endpoint.\n         A resourceId is an identification of a resource across multiple chains. So\n         instead of calling the destination address, you can call by the resourceId.\n         Use this method for single message transactions. Ensure the payload format\n         and gas limits meet the requirements of the destination chain and contract.\n @param _dstChainId The destination chain identifier.\n @param _resourceId The id of the resource on the destination chain.\n @param _payload The verified payload to send to the destination contract.\n @param _lockData The lockData\n @param _revertDataPayloadSender The revertData for the sender chainId\n @param _revertDataPayloadReceiver The revertData for the receiver chainId"
+                        },
+                        "functionSelector": "41d71744",
+                        "id": 139,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "sendToResourceId",
+                        "nameLocation": "4027:16:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 135,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 121,
+                                    "mutability": "mutable",
+                                    "name": "_dstChainId",
+                                    "nameLocation": "4061:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 139,
+                                    "src": "4053:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 120,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "4053:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 123,
+                                    "mutability": "mutable",
+                                    "name": "_resourceId",
+                                    "nameLocation": "4090:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 139,
+                                    "src": "4082:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes32",
+                                        "typeString": "bytes32"
+                                    },
+                                    "typeName": {
+                                        "id": 122,
+                                        "name": "bytes32",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "4082:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes32",
+                                            "typeString": "bytes32"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 125,
+                                    "mutability": "mutable",
+                                    "name": "_payload",
+                                    "nameLocation": "4126:8:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 139,
+                                    "src": "4111:23:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "calldata",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes_calldata_ptr",
+                                        "typeString": "bytes"
+                                    },
+                                    "typeName": {
+                                        "id": 124,
+                                        "name": "bytes",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "4111:5:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes_storage_ptr",
+                                            "typeString": "bytes"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 127,
+                                    "mutability": "mutable",
+                                    "name": "_lockData",
+                                    "nameLocation": "4157:9:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 139,
+                                    "src": "4144:22:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "memory",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes_memory_ptr",
+                                        "typeString": "bytes"
+                                    },
+                                    "typeName": {
+                                        "id": 126,
+                                        "name": "bytes",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "4144:5:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes_storage_ptr",
+                                            "typeString": "bytes"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 129,
+                                    "mutability": "mutable",
+                                    "name": "_revertDataPayloadSender",
+                                    "nameLocation": "4189:24:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 139,
+                                    "src": "4176:37:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "memory",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes_memory_ptr",
+                                        "typeString": "bytes"
+                                    },
+                                    "typeName": {
+                                        "id": 128,
+                                        "name": "bytes",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "4176:5:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes_storage_ptr",
+                                            "typeString": "bytes"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 131,
+                                    "mutability": "mutable",
+                                    "name": "_revertDataPayloadReceiver",
+                                    "nameLocation": "4236:26:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 139,
+                                    "src": "4223:39:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "memory",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes_memory_ptr",
+                                        "typeString": "bytes"
+                                    },
+                                    "typeName": {
+                                        "id": 130,
+                                        "name": "bytes",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "4223:5:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes_storage_ptr",
+                                            "typeString": "bytes"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 134,
+                                    "mutability": "mutable",
+                                    "name": "transferMetadata",
+                                    "nameLocation": "4303:16:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 139,
+                                    "src": "4272:47:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "memory",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_struct$_BridgedTransferMetadata_$55_memory_ptr",
+                                        "typeString": "struct BridgedTransferMetadata"
+                                    },
+                                    "typeName": {
+                                        "id": 133,
+                                        "nodeType": "UserDefinedTypeName",
+                                        "pathNode": {
+                                            "id": 132,
+                                            "name": "BridgedTransferMetadata",
+                                            "nameLocations": [
+                                                "4272:23:1"
+                                            ],
+                                            "nodeType": "IdentifierPath",
+                                            "referencedDeclaration": 55,
+                                            "src": "4272:23:1"
+                                        },
+                                        "referencedDeclaration": 55,
+                                        "src": "4272:23:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_struct$_BridgedTransferMetadata_$55_storage_ptr",
+                                            "typeString": "struct BridgedTransferMetadata"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "4043:282:1"
+                        },
+                        "returnParameters": {
+                            "id": 138,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 137,
+                                    "mutability": "mutable",
+                                    "name": "messageId",
+                                    "nameLocation": "4360:9:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 139,
+                                    "src": "4352:17:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes32",
+                                        "typeString": "bytes32"
+                                    },
+                                    "typeName": {
+                                        "id": 136,
+                                        "name": "bytes32",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "4352:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes32",
+                                            "typeString": "bytes32"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "4351:19:1"
+                        },
+                        "scope": 237,
+                        "src": "4018:353:1",
+                        "stateMutability": "payable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 140,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "4377:558:1",
+                            "text": " @notice Sends Rayls messages to the specified resource at a Rayls endpoint.\n         A resourceId is an identification of a resource across multiple chains. So\n         instead of calling the destination address, you can call by the resourceId.\n         Use this method for multiple message transactions. Ensure the payload format\n         and gas limits meet the requirements of the destination chain and contract.\n @param _resourceIdPayloadRequests The verified payloads to send to the destination contract."
+                        },
+                        "functionSelector": "4f02198c",
+                        "id": 149,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "sendBatchToResourceId",
+                        "nameLocation": "4949:21:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 145,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 144,
+                                    "mutability": "mutable",
+                                    "name": "_resourceIdPayloadRequests",
+                                    "nameLocation": "5015:26:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 149,
+                                    "src": "4971:70:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "calldata",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_array$_t_struct$_ResourceIdCompletePayloadRequest_$648_calldata_ptr_$dyn_calldata_ptr",
+                                        "typeString": "struct ResourceIdCompletePayloadRequest[]"
+                                    },
+                                    "typeName": {
+                                        "baseType": {
+                                            "id": 142,
+                                            "nodeType": "UserDefinedTypeName",
+                                            "pathNode": {
+                                                "id": 141,
+                                                "name": "ResourceIdCompletePayloadRequest",
+                                                "nameLocations": [
+                                                    "4971:32:1"
+                                                ],
+                                                "nodeType": "IdentifierPath",
+                                                "referencedDeclaration": 648,
+                                                "src": "4971:32:1"
+                                            },
+                                            "referencedDeclaration": 648,
+                                            "src": "4971:32:1",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_ResourceIdCompletePayloadRequest_$648_storage_ptr",
+                                                "typeString": "struct ResourceIdCompletePayloadRequest"
+                                            }
+                                        },
+                                        "id": 143,
+                                        "nodeType": "ArrayTypeName",
+                                        "src": "4971:34:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_array$_t_struct$_ResourceIdCompletePayloadRequest_$648_storage_$dyn_storage_ptr",
+                                            "typeString": "struct ResourceIdCompletePayloadRequest[]"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "4970:72:1"
+                        },
+                        "returnParameters": {
+                            "id": 148,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 147,
+                                    "mutability": "mutable",
+                                    "name": "batchId",
+                                    "nameLocation": "5086:7:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 149,
+                                    "src": "5078:15:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes32",
+                                        "typeString": "bytes32"
+                                    },
+                                    "typeName": {
+                                        "id": 146,
+                                        "name": "bytes32",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "5078:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes32",
+                                            "typeString": "bytes32"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "5077:17:1"
+                        },
+                        "scope": 237,
+                        "src": "4940:155:1",
+                        "stateMutability": "payable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 150,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "5101:673:1",
+                            "text": " @notice Used by the messaging library to publish a verified payload to the destination contract.\n         Typically called by other contracts or endpoints on the same chain.\n         Ensures message integrity and ordering using the nonce and messageId.\n @param _srcChainId The source chain identifier.\n @param _srcAddress The source contract address (as bytes) on the source chain.\n @param _dstAddress The address on the destination chain.\n @param _raylsMessage A message including RaylsMessageMetadataV1 to do validations like nonce and also the metadata\n @param _messageId The unique identifier of the message."
+                        },
+                        "functionSelector": "fe12d9c3",
+                        "id": 164,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "receivePayload",
+                        "nameLocation": "5788:14:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 162,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 152,
+                                    "mutability": "mutable",
+                                    "name": "_srcChainId",
+                                    "nameLocation": "5820:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 164,
+                                    "src": "5812:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 151,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "5812:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 154,
+                                    "mutability": "mutable",
+                                    "name": "_srcAddress",
+                                    "nameLocation": "5849:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 164,
+                                    "src": "5841:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 153,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "5841:7:1",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 156,
+                                    "mutability": "mutable",
+                                    "name": "_dstAddress",
+                                    "nameLocation": "5878:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 164,
+                                    "src": "5870:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 155,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "5870:7:1",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 159,
+                                    "mutability": "mutable",
+                                    "name": "_raylsMessage",
+                                    "nameLocation": "5919:13:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 164,
+                                    "src": "5899:33:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "memory",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_struct$_RaylsMessage_$7_memory_ptr",
+                                        "typeString": "struct RaylsMessage"
+                                    },
+                                    "typeName": {
+                                        "id": 158,
+                                        "nodeType": "UserDefinedTypeName",
+                                        "pathNode": {
+                                            "id": 157,
+                                            "name": "RaylsMessage",
+                                            "nameLocations": [
+                                                "5899:12:1"
+                                            ],
+                                            "nodeType": "IdentifierPath",
+                                            "referencedDeclaration": 7,
+                                            "src": "5899:12:1"
+                                        },
+                                        "referencedDeclaration": 7,
+                                        "src": "5899:12:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_struct$_RaylsMessage_$7_storage_ptr",
+                                            "typeString": "struct RaylsMessage"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 161,
+                                    "mutability": "mutable",
+                                    "name": "_messageId",
+                                    "nameLocation": "5950:10:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 164,
+                                    "src": "5942:18:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes32",
+                                        "typeString": "bytes32"
+                                    },
+                                    "typeName": {
+                                        "id": 160,
+                                        "name": "bytes32",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "5942:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes32",
+                                            "typeString": "bytes32"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "5802:164:1"
+                        },
+                        "returnParameters": {
+                            "id": 163,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "5975:0:1"
+                        },
+                        "scope": 237,
+                        "src": "5779:197:1",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 165,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "5982:209:1",
+                            "text": " @notice Associates an address to a resourceId\n @param _resourceId The identification of the resource\n @param _implementationAddress The address where the resource was implemented"
+                        },
+                        "functionSelector": "d4f951c7",
+                        "id": 172,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "registerResourceId",
+                        "nameLocation": "6205:18:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 170,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 167,
+                                    "mutability": "mutable",
+                                    "name": "_resourceId",
+                                    "nameLocation": "6232:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 172,
+                                    "src": "6224:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bytes32",
+                                        "typeString": "bytes32"
+                                    },
+                                    "typeName": {
+                                        "id": 166,
+                                        "name": "bytes32",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "6224:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bytes32",
+                                            "typeString": "bytes32"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 169,
+                                    "mutability": "mutable",
+                                    "name": "_implementationAddress",
+                                    "nameLocation": "6253:22:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 172,
+                                    "src": "6245:30:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 168,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "6245:7:1",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "6223:53:1"
+                        },
+                        "returnParameters": {
+                            "id": 171,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "6285:0:1"
+                        },
+                        "scope": 237,
+                        "src": "6196:90:1",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 173,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "6292:335:1",
+                            "text": " @notice Retrieves the inboundNonce for a receiving address from a source chain, which could be EVM or non-EVM.\n         The nonce is used to track the order of messages received from a specific chain/source.\n @param _srcChainId The source chain identifier.\n @return The current inbound nonce value."
+                        },
+                        "functionSelector": "de16f0b2",
+                        "id": 180,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "getInboundNonce",
+                        "nameLocation": "6641:15:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 176,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 175,
+                                    "mutability": "mutable",
+                                    "name": "_srcChainId",
+                                    "nameLocation": "6665:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 180,
+                                    "src": "6657:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 174,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "6657:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "6656:21:1"
+                        },
+                        "returnParameters": {
+                            "id": 179,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 178,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 180,
+                                    "src": "6701:7:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 177,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "6701:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "6700:9:1"
+                        },
+                        "scope": 237,
+                        "src": "6632:78:1",
+                        "stateMutability": "view",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 181,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "6716:330:1",
+                            "text": " @notice Retrieves the outboundNonce for messages sent from this chain, which is always an EVM chain.\n         The nonce is useful for maintaining the order of sent messages and for audit purposes.\n @param _dstChainId The destination chain identifier.\n @return The current outbound nonce value."
+                        },
+                        "functionSelector": "d4c08529",
+                        "id": 188,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "getOutboundNonce",
+                        "nameLocation": "7060:16:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 184,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 183,
+                                    "mutability": "mutable",
+                                    "name": "_dstChainId",
+                                    "nameLocation": "7085:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 188,
+                                    "src": "7077:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 182,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "7077:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "7076:21:1"
+                        },
+                        "returnParameters": {
+                            "id": 187,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 186,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 188,
+                                    "src": "7121:7:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 185,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "7121:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "7120:9:1"
+                        },
+                        "scope": 237,
+                        "src": "7051:79:1",
+                        "stateMutability": "view",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 189,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "7136:216:1",
+                            "text": " @notice Retrieves the immutable chain identifier of this Endpoint.\n         This identifier is unique in the context of multi-chain interactions.\n @return The chain ID of this endpoint."
+                        },
+                        "functionSelector": "3408e470",
+                        "id": 194,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "getChainId",
+                        "nameLocation": "7366:10:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 190,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "7376:2:1"
+                        },
+                        "returnParameters": {
+                            "id": 193,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 192,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 194,
+                                    "src": "7402:7:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 191,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "7402:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "7401:9:1"
+                        },
+                        "scope": 237,
+                        "src": "7357:54:1",
+                        "stateMutability": "view",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 195,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "7417:189:1",
+                            "text": " @notice Retrieves the immutable commit chain id .\n         This identifier is unique in the context of multi-chain interactions.\n @return The commit chain ID."
+                        },
+                        "functionSelector": "2232a4e2",
+                        "id": 200,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "getCommitChainId",
+                        "nameLocation": "7620:16:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 196,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "7636:2:1"
+                        },
+                        "returnParameters": {
+                            "id": 199,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 198,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 200,
+                                    "src": "7662:7:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 197,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "7662:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "7661:9:1"
+                        },
+                        "scope": 237,
+                        "src": "7611:60:1",
+                        "stateMutability": "view",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 201,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "7677:236:1",
+                            "text": " @notice Register a contract address from commit chain to be queried internally by the contracts\n @param _contractName The name of the contract\n @param _contractAddressOnCommitChain The name of the contract"
+                        },
+                        "functionSelector": "0e079130",
+                        "id": 208,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "registerCommitChainAddress",
+                        "nameLocation": "7927:26:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 206,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 203,
+                                    "mutability": "mutable",
+                                    "name": "_contractName",
+                                    "nameLocation": "7968:13:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 208,
+                                    "src": "7954:27:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "memory",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_string_memory_ptr",
+                                        "typeString": "string"
+                                    },
+                                    "typeName": {
+                                        "id": 202,
+                                        "name": "string",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "7954:6:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_string_storage_ptr",
+                                            "typeString": "string"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 205,
+                                    "mutability": "mutable",
+                                    "name": "_contractAddressOnCommitChain",
+                                    "nameLocation": "7991:29:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 208,
+                                    "src": "7983:37:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 204,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "7983:7:1",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "7953:68:1"
+                        },
+                        "returnParameters": {
+                            "id": 207,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "8030:0:1"
+                        },
+                        "scope": 237,
+                        "src": "7918:113:1",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 209,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "8037:134:1",
+                            "text": " @notice Gets a contract address from commit chain by it's name\n @param _contractName The name of the contract"
+                        },
+                        "functionSelector": "6ef12142",
+                        "id": 216,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "getCommitChainAddress",
+                        "nameLocation": "8185:21:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 212,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 211,
+                                    "mutability": "mutable",
+                                    "name": "_contractName",
+                                    "nameLocation": "8221:13:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 216,
+                                    "src": "8207:27:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "memory",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_string_memory_ptr",
+                                        "typeString": "string"
+                                    },
+                                    "typeName": {
+                                        "id": 210,
+                                        "name": "string",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "8207:6:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_string_storage_ptr",
+                                            "typeString": "string"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "8206:29:1"
+                        },
+                        "returnParameters": {
+                            "id": 215,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 214,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 216,
+                                    "src": "8259:7:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 213,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "8259:7:1",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "8258:9:1"
+                        },
+                        "scope": 237,
+                        "src": "8176:92:1",
+                        "stateMutability": "view",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 217,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "8274:107:1",
+                            "text": " @notice Check if is a trusted executor address.\n @param _executor Address to check"
+                        },
+                        "functionSelector": "672657ca",
+                        "id": 224,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "isTrustedExecutor",
+                        "nameLocation": "8395:17:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 220,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 219,
+                                    "mutability": "mutable",
+                                    "name": "_executor",
+                                    "nameLocation": "8421:9:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 224,
+                                    "src": "8413:17:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 218,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "8413:7:1",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "8412:19:1"
+                        },
+                        "returnParameters": {
+                            "id": 223,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 222,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 224,
+                                    "src": "8455:4:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bool",
+                                        "typeString": "bool"
+                                    },
+                                    "typeName": {
+                                        "id": 221,
+                                        "name": "bool",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "8455:4:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "8454:6:1"
+                        },
+                        "scope": 237,
+                        "src": "8386:75:1",
+                        "stateMutability": "view",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 225,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "8467:95:1",
+                            "text": " @notice Retrieves the protocol version.\n @return The protocol version."
+                        },
+                        "functionSelector": "54fd4d50",
+                        "id": 230,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "version",
+                        "nameLocation": "8576:7:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 226,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "8583:2:1"
+                        },
+                        "returnParameters": {
+                            "id": 229,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 228,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 230,
+                                    "src": "8609:13:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "memory",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_string_memory_ptr",
+                                        "typeString": "string"
+                                    },
+                                    "typeName": {
+                                        "id": 227,
+                                        "name": "string",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "8609:6:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_string_storage_ptr",
+                                            "typeString": "string"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "8608:15:1"
+                        },
+                        "scope": 237,
+                        "src": "8567:57:1",
+                        "stateMutability": "pure",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 231,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "8630:63:1",
+                            "text": " @notice Triggers the protocol DH key update."
+                        },
+                        "functionSelector": "83d640c7",
+                        "id": 236,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "requestNewDHKeys",
+                        "nameLocation": "8707:16:1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 234,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 233,
+                                    "mutability": "mutable",
+                                    "name": "blockNumber",
+                                    "nameLocation": "8732:11:1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 236,
+                                    "src": "8724:19:1",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 232,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "8724:7:1",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "8723:21:1"
+                        },
+                        "returnParameters": {
+                            "id": 235,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "8753:0:1"
+                        },
+                        "scope": 237,
+                        "src": "8698:56:1",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    }
+                ],
+                "scope": 238,
+                "src": "134:8622:1",
+                "usedErrors": [],
+                "usedEvents": []
+            }
+        ],
+        "src": "39:8718:1"
+    },
+    "functionHashes": {
+        "getAddressByResourceId(bytes32)": "11f50c85",
+        "getChainId()": "3408e470",
+        "getCommitChainAddress(string)": "6ef12142",
+        "getCommitChainId()": "2232a4e2",
+        "getInboundNonce(uint256)": "de16f0b2",
+        "getOutboundNonce(uint256)": "d4c08529",
+        "isTrustedExecutor(address)": "672657ca",
+        "receivePayload(uint256,address,address,((bool,uint256,(bool,uint8,bytes,uint8,bytes),bytes32,bytes,bytes,bytes,(uint8,uint256,address,address,address,uint256),bool),bytes),bytes32)": "fe12d9c3",
+        "registerCommitChainAddress(string,address)": "0e079130",
+        "registerResourceId(bytes32,address)": "d4f951c7",
+        "requestNewDHKeys(uint256)": "83d640c7",
+        "send(uint256,address,bytes)": "150b375f",
+        "sendBatch((uint256,address,bytes)[])": "407fa89e",
+        "sendBatchToResourceId((uint256,bytes32,bytes)[])": "b2958e9a",
+        "sendBatchToResourceId((uint256,bytes32,bytes,bytes,bytes,bytes,(uint8,uint256,address,address,address,uint256))[])": "4f02198c",
+        "sendToResourceId(uint256,bytes32,bytes)": "40b33bfa",
+        "sendToResourceId(uint256,bytes32,bytes,bytes,bytes,bytes,(uint8,uint256,address,address,address,uint256))": "41d71744",
+        "version()": "54fd4d50"
+    },
+    "gasEstimates": null
+}

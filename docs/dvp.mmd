@@ -1,0 +1,140 @@
+sequenceDiagram
+    participant Alice
+    participant VenOperator
+    participant PNA as PN - Relayer A
+    participant PrivateHub as Private Hub
+    participant GovernanceStack
+    participant PNB as PN - Relayer B
+    participant Bob
+
+    autonumber
+
+    rect rgb(30, 58, 138)
+        Note over Alice,PrivateHub: A) Deploys
+        Alice->>PNA: Deploy 721 / 1155 token<br/>using dvp721Handler<br/>/ dvp1155Handler
+        Alice->>PNA: Mint NFT 1
+        VenOperator->>PNA: Approve token
+
+        PNA->>PrivateHub: Deploy dvp721PNH<br/>/ dvp1155PNH
+        Note over PrivateHub: the owner address of the NFT will be one of the<br/>public keys of the relayer.<br/>We put in a map nftId -> chainId<br/>- Encrypt informations for Private Hub
+        PNA->>PrivateHub: Sync NFTs
+        Note over PNA: - Encrypt data with DH key<br/>- Send to Governance Stack
+        PNA->>GovernanceStack: EnygmaPNEvents:ZkdvpDepositCompleted
+        GovernanceStack->>PrivateHub: Get event and try to decrypt data
+    end
+
+    rect rgb(120, 53, 15)
+        Note over Alice,PrivateHub: B) Deposit NFT
+        Alice->>PNA: Deposit NFT 1 into dvp
+        PNA->>PNA: Locks NFT 1
+
+        PNA->>PrivateHub: Calls dvp721PNH.deposit<br/>/ dvp1155PNH.deposit
+        Note over PrivateHub: lock this NFT<br/>(instead of change ownership to dvp in Private Hub?)
+
+        Note over PrivateHub: dvp721PNH / dvp1155PNH will call dvp deposit method
+
+        PrivateHub->>PrivateHub: dvp721PNH<br/>/ dvp1155PNH Deposit
+
+        Note over PNA: - Encrypt data with DH key<br/>- Send to Governance Stack
+        PNA->>GovernanceStack: EnygmaPNEvents:ZkdvpDepositCompleted
+        GovernanceStack->>PrivateHub: Get event and try to decrypt data
+    end
+
+    rect rgb(21, 94, 117)
+        Note over Alice,PNB: C) Swap
+        Note over Alice: parameters:<br/>- nft_id<br/>- amount to receive<br/>- resouce id of the contract(enygma)<br/>- chain_id<br/>- shared_id<br/>- programmability data
+
+        Alice->>PNA: Calls swap for enygma function
+
+        Note over PNA: Save infos and send<br/>them to PN B through<br/>zkDVPTeleport contract
+
+        PNA->>PNA: Internal Code
+        PNA->>PrivateHub: initiateTransferEncryptedData()
+
+        Note over PrivateHub: zkDVPTeleport contract
+
+        PrivateHub->>PNB: TransferEncryptedData Event
+
+        Note over PNB: Save Alice info and wait<br/>for Bob instructions
+
+        PNB->>PNB: Internal Code
+
+        Note over Bob: parameters:<br/>- amount to pay<br/>- resource id of the contract(nft)<br/>- chain_id<br/>- shared_id<br/>- nft_id<br/>- programmability data
+
+        Bob->>PNB: Calls swap for 721/1155 function
+
+        Note over PNB: Match the informations<br/>sent by Alice
+
+        PNB->>PNB: Internal Code
+
+        PNB->>PrivateHub: transferEncryptedData()
+        Note over PrivateHub: zkDVPTeleport contract
+
+        PrivateHub->>PNA: TransferEncryptedData Event
+
+        Note over PNA: Save Bob info and<br/>call InitiateCalldata()<br/>on zkDVPTeleport
+
+        PNA->>PrivateHub: InitiateCalldata()
+        Note over PrivateHub: zkDVPTeleport contract
+        PrivateHub->>PNA: InitiateCalldata Event
+        PrivateHub->>PNB: InitiateCalldata Event
+
+        Note over PNA: Listen to InitiateCalldata Event<br/>Execute programmability call<br/>Call CalldataExecuted On zkDVPTeleport
+
+        Note over PNB: Listen to InitiateCalldata Event<br/>Execute programmability call<br/>Call CalldataExecuted On zkDVPTeleport
+
+        PNA->>PNA: Execute programmability call if needed
+        PNB->>PNB: Execute programmability call if needed
+        PNA->>PrivateHub: CalldataExecuted()
+        PNB->>PrivateHub: CalldataExecuted()
+
+        Note over PrivateHub: zkDVPTeleport<br/>Emits CalldataExecuted
+
+        PrivateHub->>PNA: CalldataExecuted Event
+        PrivateHub->>PNB: CalldataExecuted Event
+
+        Note over PNB: Leaves the swap completion<br/>to other relayer
+
+        Note over PNA: Complete the swap<br/>calls dvp.swap()<br/>calls zkDVPTeleport.completeSwap()
+
+        PNA->>PrivateHub: Calls dvp.swap()
+        PNA->>PrivateHub: Calls zkDVPTeleport.completeSwap()
+
+        Note over PrivateHub: zkDVPTeleport<br/>Emits SwapStateChanged Event
+
+        PrivateHub->>PNA: SwapStateChanged Event
+        PrivateHub->>PNB: SwapStateChanged Event
+
+        PNA->>PNA: Internal Code
+        PNB->>PNB: Internal Code
+
+        Note over PNA: - Encrypt data with DH key<br/>- Send to Governance Stack
+        PNA->>GovernanceStack: EnygmaPNEvents:ZkdvpSwapCompleted
+        GovernanceStack->>PrivateHub: Get event and try to decrypt data
+
+        Note over PNA: ATM we can send all<br/>NFT informations<br/>(public & private)
+
+        PNA->>PNB: Token deploy + mint request
+        PNB->>PNA: Enygma deploy check
+
+        Note over PNB: - Deploy / Mint token 1<br/>- Lock Token 1
+
+        PNB->>PNB: Internal Code
+    end
+
+    rect rgb(127, 29, 29)
+        Note over Bob,PrivateHub: D) Withdraw
+        Bob->>PNB: Withdraw NFT 1
+        PNB->>PrivateHub: Calls dvp.withdraw
+        Note over PNB: - Encrypt data with DH key<br/>- Send to Governance Stack
+        PNB->>GovernanceStack: EnygmaPNEvents:ZkdvpWithdrawCompleted
+        GovernanceStack->>PrivateHub: Get event and try to decrypt data
+
+        Note over PNB: - Unlock Token 1
+
+        PNB->>PNB: Internal Code
+
+        Note over PNB: - Update address of owner of NFT 1<br/>- Update mapping NFT 1 -> chainId B<br/>- Encrypt information with DH and updates it on Private Hub
+
+        PNB->>PrivateHub: Update dvp721PNH / dvp1155PNH
+    end

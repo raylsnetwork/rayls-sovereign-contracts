@@ -1,0 +1,91 @@
+      sequenceDiagram
+    participant Alice as Alice
+    participant VenOperator as Ven Operator
+    participant PNA as PN - Relayer A
+    participant CircomApi as PN - Circom Api
+    participant PrivateHub as Private Hub
+    participant GovernanceStack as Governance Stack
+    participant PNB as PN - Relayer B
+    participant PNC as PN - Relayer C
+    participant PND as PN - Relayer D
+    participant PNE as PN - Relayer E
+    participant PNF as PN - Relayer F
+    participant Bob as Bob
+
+    autonumber
+
+    rect rgb(30, 60, 80)
+        Note over Alice,PNA: A) Deploy
+
+        Alice->>PNA: Deploy Enygma token<br/>using RaylsEnygmaHandler<br/>(Erc20 like)
+
+        VenOperator->>PrivateHub: Approve token
+
+        Note over PrivateHub: TokenRegistry deploys automatically<br/>the Enygma token
+        PrivateHub->>PrivateHub: Deploy Enygma
+        PrivateHub->>PNA: send resourceId to contract
+        PNA->>PNA: contract emits<br/>event enygmaCreationEventHash
+        PNA->>PrivateHub: Relayer sync balance<br/>if user minted before approval
+
+        Note over PNA: - Save informations on database
+        PNA->>PNA: Relayer Internal code
+    end
+
+    rect rgb(80, 40, 60)
+        Note over Alice,PNA: B) Mint tokens
+
+        Alice->>PNA: Mint 100 tokens
+        Note over PNA: - Mint 100 Tokens<br/>- emits event enygmaMintEventHash
+        PNA->>PNA: contract code
+        PNA->>PrivateHub: Mint 100 on Enygma
+        Note over PNA: - Save informations on database
+        PNA->>PNA: Relayer Internal code
+        Note over PNA: - Encrypt data with DH key<br/>- Send to Governance Stack
+        PNA->>GovernanceStack: EnygmaPNEvents:EnygmaPNTransferCompleted
+        GovernanceStack->>PrivateHub: Get event and try to decrypt data
+    end
+
+    rect rgb(40, 80, 60)
+        Note over Alice,PNA: C) Cross Transfer 1 -> 3 Alice sends 10 tokens to Bob on PN B, PN C and PN D
+
+        Note over Alice: parameters:<br/>- array of addresses to send<br/>- array of amounts to send<br/>- array of chain ids<br/>- array of callables (programmability data)
+
+        Note over PNA: - burn 30 tokens<br/>- emits event enygmaCrossTransferCheck<br/>for each PN envolved (ensures erc20 deployment on destinations)<br/>- emits event enygmaCrossTransferEventHash
+
+        Alice->>PNA: Calls cross transfer function
+
+        Note over PNA: Relayer receives<br/>the event
+        PNA->>CircomApi: Generate proofs
+        CircomApi->>PNA: Send proofs
+        Note over PNA: With the proofs, R info from database,<br/>the relayer encrypt data to send to<br/>others PNs with their DH keys.<br/><br/>To complete anonymity, the relayer<br/>will select more 3 random PNs to<br/>complete 6 participants
+        PNA->>PrivateHub: Calls swap from enygma
+
+        Note over PrivateHub,PNF: Event with encryted data for all PNs involved
+
+        PrivateHub->>PNA: enygma emits event EnygmaReceiveTransferPNEventSignature
+        PrivateHub->>PNB: enygma emits event EnygmaReceiveTransferPNEventSignature
+        PrivateHub->>PNC: enygma emits event EnygmaReceiveTransferPNEventSignature
+        PrivateHub->>PND: enygma emits event EnygmaReceiveTransferPNEventSignature
+        PrivateHub->>PNE: enygma emits event EnygmaReceiveTransferPNEventSignature
+        PrivateHub->>PNF: enygma emits event EnygmaReceiveTransferPNEventSignature
+
+        Note over PrivateHub: Will represent the code for 1 PNs, but all<br/>involveds will do the same code
+
+        Note over PNB: - decrypt message with his DH key<br/>- checks if this event needs to do something<br/>- mint or execute programmability call<br/>- save infos on database
+
+        PNB->>PNB: Relayer code on event receive
+        PNB->>Bob: Bob receives his tokens
+
+        Note over PNB: - Encrypt data with DH key<br/>- Send to Governance Stack
+        PNB->>GovernanceStack: EnygmaPNEvents:EnygmaPNTransferCompleted
+
+        Note over PNC: - Encrypt data with DH key<br/>- Send to Governance Stack
+        PNC->>GovernanceStack: EnygmaPNEvents:EnygmaPNTransferCompleted
+
+        Note over PND: - Encrypt data with DH key<br/>- Send to Governance Stack
+        PND->>GovernanceStack: EnygmaPNEvents:EnygmaPNTransferCompleted
+
+        Note over PNE: - Encrypt data with DH key<br/>- Send to Governance Stack
+        PNE->>GovernanceStack: EnygmaPNEvents:EnygmaPNTransferCompleted
+
+    end

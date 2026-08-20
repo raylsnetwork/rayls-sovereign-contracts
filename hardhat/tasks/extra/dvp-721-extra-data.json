@@ -1,0 +1,4 @@
+[
+    { "key": "name", "value": "Test721", "isPublic": true },
+    { "key": "serial", "value": "secretSerial321", "isPublic": false }
+]

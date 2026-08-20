@@ -1,0 +1,9 @@
+/remappings.txt
+/node_modules
+/.env
+/cache_hardhat
+/artifacts
+/.openzeppelin
+/typechain-types
+/out
+/cache

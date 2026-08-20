@@ -1,0 +1,6 @@
+github.com/cloudflare/circl v1.6.1 h1:zqIqSPIndyBh1bjLVVDHMPpVKqp8Su/V+6MeDzzQBQ0=
+github.com/cloudflare/circl v1.6.1/go.mod h1:uddAzsPgqdMAYatqJ0lsjX1oECcQLIlRpzZh3pJrofs=
+github.com/ryndia/circl v0.0.0-20230605172909-746a847071a1 h1:K7rsly1mQ4FFVd+287K7UW6SAzn/E8hKd9Qgp3THe4w=
+github.com/ryndia/circl v0.0.0-20230605172909-746a847071a1/go.mod h1:rUK5XyI2TVu1mY02ZySMjfi4fi0KE4sUhxsNsC0c2Hs=
+golang.org/x/sys v0.33.0 h1:q3i8TbbEz+JRD9ywIRlyRAQbM0qF7hu24q3teo2hbuw=
+golang.org/x/sys v0.33.0/go.mod h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k=
