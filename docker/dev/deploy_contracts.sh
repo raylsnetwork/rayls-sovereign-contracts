@@ -191,8 +191,18 @@ echo "   ⏱  audit:deploy-selectors took $((SECONDS - audit_start))s"
 deploy_public_chain() {
     local RELAYER_NAME=$1
     local HH_PC_NETWORK HH_PC_CHAIN_ID
+    # Default to the in-stack local public chain (localPC = public-chain:8845,
+    # chain-id 7331). When bridging to an EXTERNAL public chain — PUBLIC_CHAIN_RPC_URL
+    # set to anything other than the local public-chain host — use the env-driven
+    # `public_chain` hardhat network (built from PUBLIC_CHAIN_RPC_URL/PUBLIC_CHAIN_ID)
+    # instead. Otherwise the deploy dials the nonexistent local `public-chain` host
+    # and fails with `ENOTFOUND public-chain` on a testnet-bridged stack.
     HH_PC_NETWORK="localPC"
     HH_PC_CHAIN_ID="7331"
+    if [ -n "${PUBLIC_CHAIN_RPC_URL:-}" ] && [[ "$PUBLIC_CHAIN_RPC_URL" != *"public-chain:8845"* ]]; then
+        HH_PC_NETWORK="public_chain"
+        HH_PC_CHAIN_ID="${PUBLIC_CHAIN_ID:-$HH_PC_CHAIN_ID}"
+    fi
 
     echo "Deploying Public Chain contracts for $RELAYER_NAME..."
     set +e
@@ -935,6 +945,9 @@ authorize_participant_async() {
     # PC network mirrors deploy_public_chain's selection.
     local hh_pc_network
     hh_pc_network="localPC"
+    if [ -n "${PUBLIC_CHAIN_RPC_URL:-}" ] && [[ "$PUBLIC_CHAIN_RPC_URL" != *"public-chain:8845"* ]]; then
+        hh_pc_network="public_chain"
+    fi
 
     # PN registry must exist by this point — `deploy_relayer` writes it to
     # the relayer env file before completing. Empty-check is defensive: if
