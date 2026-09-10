@@ -1,5 +1,7 @@
-# Use a base image that includes Go
-FROM golang:1.24.4-alpine3.22 AS gobuilder
+# Use a base image that includes Go.
+# Pinned to $BUILDPLATFORM and cross-compiled: Go needs no emulation, so the
+# arm64 image costs the same as the amd64 one.
+FROM --platform=$BUILDPLATFORM golang:1.24.4-alpine3.22 AS gobuilder
 
 # Install git, required for fetching Go dependencies
 RUN apk add --no-cache git
@@ -10,9 +12,12 @@ WORKDIR /app
 # Copy the Go source file(s)
 COPY ./hardhat/tasks/utils/mlkemgen /app
 
-# Depending on the target OS and architecture, set the appropriate environment variables and build the executable
-# Here, we're building for Linux as an example
-RUN GOOS=linux GOARCH=amd64 go build -o mlkemgen main.go
+# Build for the image being produced, NOT for the machine doing the building.
+# This was hardcoded to GOARCH=amd64, which put an x86-64 binary inside the
+# arm64 image — mlkemgen then died with "exec format error" at runtime.
+ARG TARGETOS
+ARG TARGETARCH
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o mlkemgen main.go
 
 # Stage 1: Build Environment
 FROM node:22-slim AS build
