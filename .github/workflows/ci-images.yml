@@ -1,0 +1,19 @@
+name: CI images
+
+# Builds this repo's images on a PR and scans them. Nothing is published.
+# The pipeline itself lives in raylsnetwork/rayls-sovereign-workflows.
+#
+# pull_request, NOT pull_request_target — this repo is public, and
+# pull_request_target would run a fork's code with this repo's secrets.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  images:
+    uses: raylsnetwork/rayls-sovereign-workflows/.github/workflows/ci-container.yml@v1
+    with:
+      images: >-
+        [{"image": "contracts", "dockerfile": "Dockerfile"}]
