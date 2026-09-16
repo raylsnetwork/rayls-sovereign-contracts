@@ -1,0 +1,21 @@
+name: Release
+
+# Publishes this repo's images when a maintainer pushes a v* tag.
+# The pipeline itself lives in raylsnetwork/rayls-sovereign-workflows.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    permissions:
+      contents: read
+      id-token: write
+    uses: raylsnetwork/rayls-sovereign-workflows/.github/workflows/release-container.yml@v1
+    with:
+      images: >-
+        [{"image": "contracts", "dockerfile": "Dockerfile"}]
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
