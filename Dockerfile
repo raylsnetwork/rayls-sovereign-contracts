@@ -1,7 +1,9 @@
 # Use a base image that includes Go.
 # Pinned to $BUILDPLATFORM and cross-compiled: Go needs no emulation, so the
 # arm64 image costs the same as the amd64 one.
-FROM --platform=$BUILDPLATFORM golang:1.24.4-alpine3.22 AS gobuilder
+# 1.24.13 carries the stdlib fix for CVE-2025-68121; mlkemgen links it and ships
+# in the final image.
+FROM --platform=$BUILDPLATFORM golang:1.24.13-alpine3.22 AS gobuilder
 
 # Install git, required for fetching Go dependencies
 RUN apk add --no-cache git
@@ -121,7 +123,13 @@ RUN chmod +x ./hardhat/tasks/utils/mlkemgen/mlkemgen
 # prettier and ignition-ui are formatting/UI-only and unused by the deploy tasks.
 # The prune must share this RUN layer: deleting in a later layer would leave the
 # files in the underlying layer and save nothing.
+#
+# The npm upgrade is the fix for CVE-2026-59873: the base bundles node-tar
+# 7.5.11 and no node:22-alpine tag ships a patched one yet. Drop it once one
+# does. It has to run *after* npm ci — npm 12 reads this lockfile as out of
+# sync, since npm 10 wrote it without the optional platform packages.
 RUN npm ci && \
+    npm install -g npm@12.0.2 && \
     rm -rf \
       node_modules/@nomicfoundation/edr-darwin-x64 \
       node_modules/@nomicfoundation/edr-darwin-arm64 \
