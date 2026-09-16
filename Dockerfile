@@ -129,7 +129,7 @@ RUN chmod +x ./hardhat/tasks/utils/mlkemgen/mlkemgen
 # does. It has to run *after* npm ci — npm 12 reads this lockfile as out of
 # sync, since npm 10 wrote it without the optional platform packages.
 RUN npm ci && \
-    npm install -g npm@12.0.2 && \
+    npm install -g npm@12.0.2 --ignore-scripts && \
     rm -rf \
       node_modules/@nomicfoundation/edr-darwin-x64 \
       node_modules/@nomicfoundation/edr-darwin-arm64 \
