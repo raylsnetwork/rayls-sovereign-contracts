@@ -5,6 +5,6 @@ interface IEnygmaWithdrawFromDvpVerifierk3 {
         uint256[2] calldata pi_a,
         uint256[2][2] calldata pi_b,
         uint256[2] calldata pi_c,
-        uint256[36] calldata public_signal
+        uint256[27] calldata public_signal
     ) external view returns (bool);
 }
