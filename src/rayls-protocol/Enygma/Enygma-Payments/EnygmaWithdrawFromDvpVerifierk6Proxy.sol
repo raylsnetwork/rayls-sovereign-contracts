@@ -12,7 +12,7 @@ contract EnygmaWithdrawFromDvpVerifierk6Proxy is RaylsAccessManaged {
         if (_authority != address(0)) _setAuthority(_authority);
     }
 
-    function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC, uint[60] calldata _pubSignals) public view returns (bool) {
+    function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC, uint[51] calldata _pubSignals) public view returns (bool) {
         return EnygmaWithdrawFromDvpVerifierk6(verifierAddress).verifyProof(_pA, _pB, _pC, _pubSignals);
     }
 

@@ -33,6 +33,7 @@ contract EnygmaDvpIntegration {
     mapping(uint256 => address) public withdrawFromDvpVerifiers;
 
     error EnygmaDvpIntegration__OnlyFactoryAllowed();
+    error EnygmaDvpIntegration__PaymentCommitmentMismatch();
 
     modifier onlyFactory() {
         if (msg.sender != factory) revert EnygmaDvpIntegration__OnlyFactoryAllowed();
@@ -133,6 +134,16 @@ contract EnygmaDvpIntegration {
         IDvp.ProofReceipt memory transaction,
         bytes calldata encryptedMintUpdate
     ) public checkFreeze nonReentrant returns (bool) {
+        // The withdraw proof opens its last public input (paymentCommitment) with the
+        // credited amount; the join-split receipt's first output is the payment its burned
+        // notes paid out. Requiring them to be equal ties the credit to the burned value.
+        if (
+            transaction.commitments.length == 0 ||
+            transaction.commitments[0] != proof.public_signal[proof.public_signal.length - 1]
+        ) {
+            revert EnygmaDvpIntegration__PaymentCommitmentMismatch();
+        }
+
         // Convert to transfer proof and extract all data in one place
         IEnygmaV1.TransferProof memory transferProof = convertWithdrawProofToTransferProof(proof);
         IEnygmaV1.ExtractedProofData memory proofData = _extractProofDataFromTransferProof(transferProof);
@@ -282,30 +293,30 @@ contract EnygmaDvpIntegration {
     }
 
     function verifyWithdrawProof(uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view returns (bool) {
-        // WithdrawFromDvp sizes: 8*k + 12 = k2:28, k3:36, k4:44, k5:52, k6:60
+        // WithdrawFromDvp sizes: 8*k + 3 = k2:19, k3:27, k4:35, k5:43, k6:51 (same as DepositToDvp)
         if (k == 2) {
             require(
-                IEnygmaWithdrawFromDvpVerifierk2(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array28(proof.public_signal)),
+                IEnygmaWithdrawFromDvpVerifierk2(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array19(proof.public_signal)),
                 'verifyProof returned false: Invalid withdraw proof'
             );
         } else if (k == 3) {
             require(
-                IEnygmaWithdrawFromDvpVerifierk3(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array36(proof.public_signal)),
+                IEnygmaWithdrawFromDvpVerifierk3(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array27(proof.public_signal)),
                 'verifyProof returned false: Invalid withdraw proof'
             );
         } else if (k == 4) {
             require(
-                IEnygmaWithdrawFromDvpVerifierk4(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array44(proof.public_signal)),
+                IEnygmaWithdrawFromDvpVerifierk4(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array35(proof.public_signal)),
                 'verifyProof returned false: Invalid withdraw proof'
             );
         } else if (k == 5) {
             require(
-                IEnygmaWithdrawFromDvpVerifierk5(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array52(proof.public_signal)),
+                IEnygmaWithdrawFromDvpVerifierk5(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array43(proof.public_signal)),
                 'verifyProof returned false: Invalid withdraw proof'
             );
         } else if (k == 6) {
             require(
-                IEnygmaWithdrawFromDvpVerifierk6(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array60(proof.public_signal)),
+                IEnygmaWithdrawFromDvpVerifierk6(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array51(proof.public_signal)),
                 'verifyProof returned false: Invalid withdraw proof'
             );
         } else {
@@ -338,9 +349,9 @@ contract EnygmaDvpIntegration {
         transferProof.pi_b = proof.pi_b;
         transferProof.pi_c = proof.pi_c;
 
-        // Create a new array without last 10 items (dvp commitment hashes)
-        uint256[] memory adjustedPublicSignal = new uint256[](proof.public_signal.length - 10);
-        for (uint256 i = 0; i < proof.public_signal.length - 10; i++) {
+        // Create a new array without last item (paymentCommitment)
+        uint256[] memory adjustedPublicSignal = new uint256[](proof.public_signal.length - 1);
+        for (uint256 i = 0; i < proof.public_signal.length - 1; i++) {
             adjustedPublicSignal[i] = proof.public_signal[i];
         }
         transferProof.public_signal = adjustedPublicSignal;
@@ -364,7 +375,7 @@ contract EnygmaDvpIntegration {
         return transferProof;
     }
 
-    // Deposit verifier array conversions: 8*k + 3
+    // Deposit and withdraw verifier array conversions: 8*k + 3
     // k=2: 19, k=3: 27, k=4: 35, k=5: 43, k=6: 51
     function convertToUint256Array19(uint256[] memory dynamicArray) internal pure returns (uint256[19] memory fixedArray) {
         require(dynamicArray.length == 19, 'Input array must have exactly 19 elements');
@@ -401,48 +412,6 @@ contract EnygmaDvpIntegration {
     function convertToUint256Array51(uint256[] memory dynamicArray) internal pure returns (uint256[51] memory fixedArray) {
         require(dynamicArray.length == 51, 'Input array must have exactly 51 elements');
         for (uint256 i = 0; i < 51; i++) {
-            fixedArray[i] = dynamicArray[i];
-        }
-        return fixedArray;
-    }
-
-    // Withdraw verifier array conversions: 8*k + 12
-    // k=2: 28, k=3: 36, k=4: 44, k=5: 52, k=6: 60
-    function convertToUint256Array28(uint256[] memory dynamicArray) internal pure returns (uint256[28] memory fixedArray) {
-        require(dynamicArray.length == 28, 'Input array must have exactly 28 elements');
-        for (uint256 i = 0; i < 28; i++) {
-            fixedArray[i] = dynamicArray[i];
-        }
-        return fixedArray;
-    }
-
-    function convertToUint256Array36(uint256[] memory dynamicArray) internal pure returns (uint256[36] memory fixedArray) {
-        require(dynamicArray.length == 36, 'Input array must have exactly 36 elements');
-        for (uint256 i = 0; i < 36; i++) {
-            fixedArray[i] = dynamicArray[i];
-        }
-        return fixedArray;
-    }
-
-    function convertToUint256Array44(uint256[] memory dynamicArray) internal pure returns (uint256[44] memory fixedArray) {
-        require(dynamicArray.length == 44, 'Input array must have exactly 44 elements');
-        for (uint256 i = 0; i < 44; i++) {
-            fixedArray[i] = dynamicArray[i];
-        }
-        return fixedArray;
-    }
-
-    function convertToUint256Array52(uint256[] memory dynamicArray) internal pure returns (uint256[52] memory fixedArray) {
-        require(dynamicArray.length == 52, 'Input array must have exactly 52 elements');
-        for (uint256 i = 0; i < 52; i++) {
-            fixedArray[i] = dynamicArray[i];
-        }
-        return fixedArray;
-    }
-
-    function convertToUint256Array60(uint256[] memory dynamicArray) internal pure returns (uint256[60] memory fixedArray) {
-        require(dynamicArray.length == 60, 'Input array must have exactly 60 elements');
-        for (uint256 i = 0; i < 60; i++) {
             fixedArray[i] = dynamicArray[i];
         }
         return fixedArray;
