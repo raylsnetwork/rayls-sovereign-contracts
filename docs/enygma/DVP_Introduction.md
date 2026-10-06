@@ -493,12 +493,12 @@ This circuit validates a withdrawal transaction, ensuring:
    - Enygma: `sum(tx_value[i]) == 0` (zero-sum transaction)
    - WithdrawFromEnygmaDvp: `sum(tx_value[i]) == v` (sum equals withdrawal amount)
 
-3. **Additional DVP Commitment Hash Verification**:
-   - Includes verification of hashes to validate the withdrawal
-   - Checks multiple deposits through a hash array
+3. **Binding to the DVP Join-Split Payment**:
+   - The credited amount `v` must be the value of the join-split's payment output
+   - The circuit opens the public `PaymentCommitment` with `v`, and `withdrawFromDvp` requires it to equal the join-split receipt's `commitments[0]`
 
-4. **Deposit Key Verification**:
-   - Verifies ownership of deposits using deposit secret keys (`sk_deposits`)
+4. **Payment Key Verification**:
+   - The payment output must belong to the key whose secret (`payment_secret_key`) the prover knows
 
 5. **No Balance Check**:
    - Unlike Enygma and DepositToDvp, WithdrawFromDvp does not include a balance check to verify if `previous_v >= v`
@@ -533,36 +533,22 @@ api.AssertIsEqual(sumTx, v)
 
 - **Purpose**: Ensures that the sum of transaction values equals the withdrawal amount.
 
-*Withdrawal Amount and Commitment Verification (Different from Enygma)*
+*Payment Commitment Opening (Different from Enygma)*
 
 ```go
-// Process each potential deposit (always 10 in circuit)
-for i := 0; i < 10; i++ {
-    // Check if deposit value is zero
-    isDepositZero := api.IsZero(v_per_deposit[i])
-    
-    // Get public key from each sk_deposit using Poseidon hash
-    publicKeyFromSk := pos.Poseidon(api, []frontend.Variable{sk_deposits[i]})
-    
-    // Check hash computations
-    firstHash := pos.Poseidon(api, []frontend.Variable{address, v_per_deposit[i]})
-    secondHash := pos.Poseidon(api, []frontend.Variable{firstHash, publicKeyFromSk})
-    
-    // Conditional equality check
-    // enabled = 1 - isZero (1 if value is NOT zero, 0 if value is zero)
-    enabled := api.Sub(frontend.Variable(1), isDepositZero)
-    
-    // If enabled == 1, assert equality; if enabled == 0, skip assertion
-    // This is implemented as: enabled * (hashes[i] - secondHash) == 0
-    difference := api.Sub(hashes[i], secondHash)
-    conditionalDifference := api.Mul(enabled, difference)
-    api.AssertIsEqual(conditionalDifference, frontend.Variable(0))
+// paymentCommitment is public; the contract requires it to equal the
+// join-split receipt's payment output (commitments[0]).
+paymentPK, err := primitives.PublicKey(api, paymentSecretKey)
+if err != nil {
+    return err
 }
+computedPayment := primitives.CommitmentV2ERC20(api, paymentPK, paymentSalt, sender_tx_value, address)
+api.AssertIsEqual(computedPayment, paymentCommitment)
 ```
 
-- **Purpose**: Verifies each deposit used in the withdrawal, including proper hash computation and ownership verification.
+- **Purpose**: Proves that the credited amount `v` is exactly the value of the payment output of the join-split that burned the Dvp coins. The join-split circuit already guarantees that output holds what its nullified inputs held (minus change), so the credit cannot exceed the burned value.
 
-The Join-Split circuit, [3.3.2 The JoinSplit Circuit](#332-the-joinsplit-circuit), is also used next, before finalising the withdrawal, to check that the user can spend the coin he wants to withdraw.
+The Join-Split circuit, [3.3.2 The JoinSplit Circuit](#332-the-joinsplit-circuit), is also used next, before finalising the withdrawal, to check that the user can spend the coin he wants to withdraw. Its payment output (`commitments[0]`) is the commitment the withdraw proof opens.
 
 #### 3.2.3 Contract Functions used when Withdrawing Enygma from DVP
 
@@ -571,6 +557,7 @@ When withdrawing Enygma tokens from Dvp, several contract functions are involved
 1. **`withdrawFromDvp`** (in EnygmaDvpIntegration.sol)
    - Entry point for withdrawal operations
    - Parameters include k-anonymity value, commitments, proof, chain IDs, encrypted messages, and a ProofReceipt
+   - Reverts with `EnygmaDvpIntegration__PaymentCommitmentMismatch` unless the proof's last public signal (`PaymentCommitment`) equals the receipt's `commitments[0]`
    - Validates the withdrawal proof and processes the transaction
    - Calls `processWithdraw` to interact with the Dvp contract
 
@@ -600,7 +587,7 @@ When withdrawing Enygma tokens from Dvp, several contract functions are involved
 The withdrawal flow follows these steps:
 
 1. User initiates a withdrawal through `withdrawFromDvp` with a valid proof and ProofReceipt
-2. The function validates the proof using the appropriate verifier (based on k value)
+2. The function checks the proof's `PaymentCommitment` against the receipt's payment output, then validates the proof using the appropriate verifier (based on k value)
 3. `processWithdraw` is called to interact with the Dvp contract
 4. `withdrawEnygma` in the Dvp contract retrieves the EnygmaCoinVault and calls its `withdraw()` function
 5. The ProofReceipt is verified via `checkReceiptConditions()`
