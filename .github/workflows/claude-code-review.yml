@@ -61,7 +61,7 @@ jobs:
             PR NUMBER: ${{ github.event.pull_request.number }}
 
             Please review this pull request with a focus on:
-            - Code quality and Rust best practices
+            - Code quality and Go best practices
             - Potential bugs or issues
             - Security implications
             - Performance considerations
