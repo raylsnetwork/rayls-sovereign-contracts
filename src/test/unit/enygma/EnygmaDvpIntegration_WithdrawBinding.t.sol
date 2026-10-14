@@ -89,6 +89,16 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         assertTrue(ok);
     }
 
+    /// @notice The freeze check runs before anything else on the withdraw path.
+    function test_withdrawFromDvp_tokenFrozen_reverts() public {
+        vm.mockCall(tokenRegistry, abi.encodeWithSelector(TokenRegistryV1.isTokenFrozenForParticipant.selector), abi.encode(true));
+
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__TokenFrozen.selector);
+        integration.withdrawFromDvp(
+            _withdrawProof(PAYMENT_COMMITMENT), new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), ""
+        );
+    }
+
     function test_SECURITY_withdrawFromDvp_otherPaymentCommitment_reverts() public {
         vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__PaymentCommitmentMismatch.selector);
         integration.withdrawFromDvp(

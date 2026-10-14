@@ -40,6 +40,8 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     error EnygmaDvpIntegration__EmptyPublicSignals();
     /// @dev The receipt's payment commitment is 0: an uninitialised value or a bug, never a real payment.
     error EnygmaDvpIntegration__ZeroPaymentCommitment();
+    /// @dev The deposit's hashCommitment is 0, which would insert a trivially known note into the vault.
+    error EnygmaDvpIntegration__ZeroHashCommitment();
     /// @dev A verifier or DvP address was set to zero, which would only surface later as a failed call.
     error EnygmaDvpIntegration__ZeroAddress();
     /// @dev The Enygma token is frozen for this participant.
@@ -85,6 +87,8 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         _;
     }
 
+    /// @dev Overwrites any verifier already set for `k`, unlike the set-once `setVaultId`: the factory
+    ///      re-registers verifiers when a trusted-setup ceremony rotates the keys.
     function addDepositToDvpVerifier(address depositToDvpVerifier, uint8 k) public onlyFactory returns (bool) {
         if (depositToDvpVerifier == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         depositToDvpVerifiers[k] = depositToDvpVerifier;
@@ -92,6 +96,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         return true;
     }
 
+    /// @dev Overwrites any verifier already set for `k`; see addDepositToDvpVerifier.
     function addWithdrawFromDvpVerifier(address withdrawFromDvpVerifier, uint8 k) public onlyFactory returns (bool) {
         if (withdrawFromDvpVerifier == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         withdrawFromDvpVerifiers[k] = withdrawFromDvpVerifier;
@@ -121,6 +126,9 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     ) external checkFreeze nonReentrant returns (bool) {
         // Reject before stripping hashCommitment so an empty proof doesn't panic on underflow
         if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
+        // hashCommitment is the extra element at the end of the deposit proof
+        uint256 hashCommitment = proof.public_signal[proof.public_signal.length - 1];
+        if (hashCommitment == 0) revert EnygmaDvpIntegration__ZeroHashCommitment();
 
         // Convert to transfer proof and extract all data in one place
         IEnygmaV1.TransferProof memory transferProof = convertDepositProofToTransferProof(proof);
@@ -134,8 +142,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         // Finalize pending transactions
         _enygmaV1.dvpFinalisePendingTransactions(proofData.blockNumber);
 
-        // Process deposit - hashCommitment is the extra element at the end of deposit proof
-        uint256 hashCommitment = uint256(proof.public_signal[proof.public_signal.length - 1]);
+        // Process deposit
         if (!processDeposit(hashCommitment)) revert EnygmaDvpIntegration__DvpCallFailed();
 
         // Add the current transaction to pending balances

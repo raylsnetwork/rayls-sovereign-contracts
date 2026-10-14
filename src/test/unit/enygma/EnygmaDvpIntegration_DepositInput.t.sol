@@ -17,6 +17,8 @@ contract EnygmaDvpIntegrationDepositInputTest is Test {
     address public enygmaV1;
     address public tokenRegistry;
 
+    uint256 constant HASH_COMMITMENT = 0xDEC0DE;
+
     function setUp() public {
         factory = makeAddr("factory");
         enygmaV1 = makeAddr("enygmaV1");
@@ -33,6 +35,24 @@ contract EnygmaDvpIntegrationDepositInputTest is Test {
         vm.mockCall(tokenRegistry, abi.encodeWithSelector(TokenRegistryV1.isTokenFrozenForParticipant.selector), abi.encode(false));
     }
 
+    /// @notice A zero hashCommitment would insert a trivially known note into the vault.
+    function test_SECURITY_depositToDvp_zeroHashCommitment_reverts() public {
+        IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
+        proof.public_signal = new uint256[](8 * 2 + 3);
+
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroHashCommitment.selector);
+        integration.depositToDvp(proof, new bytes[](0), "");
+    }
+
+    function test_depositToDvp_tokenFrozen_reverts() public {
+        vm.mockCall(tokenRegistry, abi.encodeWithSelector(TokenRegistryV1.isTokenFrozenForParticipant.selector), abi.encode(true));
+        IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
+        proof.public_signal = new uint256[](8 * 2 + 3);
+
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__TokenFrozen.selector);
+        integration.depositToDvp(proof, new bytes[](0), "");
+    }
+
     function test_depositToDvp_emptyProofSignals_reverts() public {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
         proof.public_signal = new uint256[](0);
@@ -45,6 +65,7 @@ contract EnygmaDvpIntegrationDepositInputTest is Test {
     function test_depositToDvp_wrongPublicSignalLayout_reverts() public {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
         proof.public_signal = new uint256[](8 * 2 + 12);
+        proof.public_signal[8 * 2 + 11] = HASH_COMMITMENT;
 
         vm.expectRevert(abi.encodeWithSelector(EnygmaDvpIntegration.EnygmaDvpIntegration__InvalidPublicSignalLength.selector, 8 * 2 + 11));
         integration.depositToDvp(proof, new bytes[](0), "");
@@ -54,6 +75,7 @@ contract EnygmaDvpIntegrationDepositInputTest is Test {
     function test_depositToDvp_onlyHashCommitmentSignal_reverts() public {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
         proof.public_signal = new uint256[](1);
+        proof.public_signal[0] = HASH_COMMITMENT;
 
         vm.expectRevert(abi.encodeWithSelector(EnygmaDvpIntegration.EnygmaDvpIntegration__InvalidPublicSignalLength.selector, 0));
         integration.depositToDvp(proof, new bytes[](0), "");
