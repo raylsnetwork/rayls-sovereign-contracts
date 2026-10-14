@@ -29,6 +29,7 @@ contract EnygmaDvpIntegrationConsolidateFundsTest is Test {
     address public factory;
     address public enygmaV1;
     address public dvp;
+    address public tokenRegistry;
 
     uint256 constant VAULT_ID = 1;
 
@@ -36,7 +37,16 @@ contract EnygmaDvpIntegrationConsolidateFundsTest is Test {
         factory = makeAddr("factory");
         enygmaV1 = makeAddr("enygmaV1");
         dvp = makeAddr("dvp");
+        tokenRegistry = makeAddr("tokenRegistry");
         vm.etch(dvp, hex"fe");
+        vm.etch(enygmaV1, hex"fe");
+        vm.etch(tokenRegistry, hex"fe");
+
+        // checkFreeze: token not frozen unless a test overrides it
+        vm.mockCall(enygmaV1, abi.encodeWithSignature("tokenRegistryContract()"), abi.encode(tokenRegistry));
+        vm.mockCall(enygmaV1, abi.encodeWithSignature("resourceId()"), abi.encode(bytes32("resource")));
+        vm.mockCall(enygmaV1, abi.encodeWithSignature("ownerChainId()"), abi.encode(uint256(1)));
+        vm.mockCall(tokenRegistry, abi.encodeWithSelector(TokenRegistryV1.isTokenFrozenForParticipant.selector), abi.encode(false));
 
         integration = new EnygmaDvpIntegration(enygmaV1, factory);
         vm.startPrank(factory);
@@ -52,6 +62,16 @@ contract EnygmaDvpIntegrationConsolidateFundsTest is Test {
 
         vm.prank(makeAddr("relayer"));
         assertTrue(integration.consolidateFunds(receipt));
+    }
+
+    /// @notice A join-split can pay notes to other keys, so consolidation must respect a freeze.
+    function test_SECURITY_consolidateFunds_tokenFrozen_reverts() public {
+        IDvp.ProofReceipt memory receipt;
+        vm.mockCall(tokenRegistry, abi.encodeWithSelector(TokenRegistryV1.isTokenFrozenForParticipant.selector), abi.encode(true));
+
+        vm.expectCall(dvp, abi.encodeWithSelector(IDvp.mixFunds.selector), 0);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__TokenFrozen.selector);
+        integration.consolidateFunds(receipt);
     }
 
     /// @notice A false return from the DvP is surfaced as a revert, like deposit and withdraw.

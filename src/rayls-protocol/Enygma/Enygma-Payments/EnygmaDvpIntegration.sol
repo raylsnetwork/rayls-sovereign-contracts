@@ -217,9 +217,11 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
      *      receipt itself, which `Dvp.mixFunds` -> `EnygmaCoinVault.transfer` verifies (join-split
      *      proof, roots, nullifiers) before spending any note. `Dvp.mixFunds` is `restricted`, so this
      *      contract is the only Enygma entry point to it; that gate is not a caller check.
+     *      The freeze check applies: a join-split can pay notes to other keys, so consolidation could
+     *      otherwise move value while the token is frozen for this participant.
      * @param transaction The join-split receipt to apply.
      */
-    function consolidateFunds(IDvp.ProofReceipt memory transaction) external nonReentrant returns (bool) {
+    function consolidateFunds(IDvp.ProofReceipt memory transaction) external nonReentrant checkFreeze returns (bool) {
         (uint256 vaultId, address dvpAddress) = _dvpConfig();
         if (!IDvp(dvpAddress).mixFunds(vaultId, transaction)) revert EnygmaDvpIntegration__DvpCallFailed();
         return true;
@@ -316,7 +318,8 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     ) internal pure {
         if (transaction.commitments.length == 0) revert EnygmaDvpIntegration__EmptyReceiptCommitments();
         uint256 receiptPayment = transaction.commitments[0];
-        // Rejecting a zero receipt also rejects a zero proof signal, since the two must be equal.
+        // A zero proof signal could only pass by matching a zero receipt, which is rejected here first,
+        // so a zero signal always reverts (with PaymentCommitmentMismatch against a non-zero receipt).
         if (receiptPayment == 0) revert EnygmaDvpIntegration__ZeroPaymentCommitment();
         if (receiptPayment != proof.public_signal[proof.public_signal.length - 1]) {
             revert EnygmaDvpIntegration__PaymentCommitmentMismatch();
@@ -333,7 +336,8 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     function _verifyZkProof(address verifier, uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view {
         if (verifier == address(0)) revert EnygmaDvpIntegration__VerifierNotSet(k);
         bool valid;
-        // 8*k + 3 = k2:19, k3:27, k4:35, k5:43, k6:51
+        // 8*k + 3 = k2:19, k3:27, k4:35, k5:43, k6:51. Withdraw verifiers (and their proxies) expose the
+        // same verifyProof ABI, which is why IEnygmaWithdrawFromDvpVerifierkN isn't imported here.
         if (k == 2) {
             valid = IEnygmaDepositToDvpVerifierk2(verifier).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array19(proof.public_signal));
         } else if (k == 3) {
@@ -350,12 +354,12 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         if (!valid) revert EnygmaDvpIntegration__InvalidProof();
     }
 
-    function processDeposit(uint256 hashCommitment) internal returns (bool) {
+    function processDeposit(uint256 hashCommitment) private returns (bool) {
         (uint256 vaultId, address dvpAddress) = _dvpConfig();
         return IDvp(dvpAddress).depositEnygma(vaultId, hashCommitment);
     }
 
-    function processWithdraw(IDvp.ProofReceipt memory transaction) internal returns (bool) {
+    function processWithdraw(IDvp.ProofReceipt memory transaction) private returns (bool) {
         (uint256 vaultId, address dvpAddress) = _dvpConfig();
         return IDvp(dvpAddress).withdrawEnygma(vaultId, transaction);
     }
