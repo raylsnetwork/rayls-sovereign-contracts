@@ -26,19 +26,20 @@ import {ReentrancyGuard} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol
 contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     EnygmaV1 private _enygmaV1;
     address private _dvpAddress;
-    address private _enygmaV1Address;
     uint256 private _vaultId;
     address public immutable factory;
 
-    mapping(uint256 => address) public depositToDvpVerifiers;
-    mapping(uint256 => address) public withdrawFromDvpVerifiers;
+    mapping(uint8 => address) public depositToDvpVerifiers;
+    mapping(uint8 => address) public withdrawFromDvpVerifiers;
 
     error EnygmaDvpIntegration__OnlyFactoryAllowed();
     /// @dev The withdraw proof's PaymentCommitment does not equal the receipt's commitments[0],
-    ///      the receipt has no outputs, or the commitment is zero.
+    ///      or the receipt has no outputs.
     error EnygmaDvpIntegration__PaymentCommitmentMismatch();
     /// @dev The proof has no public signals, so there is no trailing commitment to strip.
     error EnygmaDvpIntegration__EmptyPublicSignals();
+    /// @dev The receipt's payment commitment is 0: an uninitialised value or a bug, never a real payment.
+    error EnygmaDvpIntegration__ZeroPaymentCommitment();
     /// @dev A verifier or DvP address was set to zero, which would only surface later as a failed call.
     error EnygmaDvpIntegration__ZeroAddress();
     /// @dev The Enygma token is frozen for this participant.
@@ -69,7 +70,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
      * @param _factory The address of the factory contract authorized to configure this integration
      */
     constructor(address enygmaV1Address, address _factory) {
-        _enygmaV1Address = enygmaV1Address;
+        if (enygmaV1Address == address(0) || _factory == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         _enygmaV1 = EnygmaV1(enygmaV1Address);
         factory = _factory;
     }
@@ -101,6 +102,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     function addDvp(address dvpAddress) public onlyFactory returns (bool) {
         if (dvpAddress == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         _dvpAddress = dvpAddress;
+        emit IEnygmaDvpIntegration.DvpRegistered(dvpAddress);
         return true;
     }
 
@@ -108,6 +110,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         if (_vaultId != 0) revert EnygmaDvpIntegration__VaultIdAlreadySet();
         if (vaultId == 0) revert EnygmaDvpIntegration__InvalidVaultId();
         _vaultId = vaultId;
+        emit IEnygmaDvpIntegration.VaultIdSet(vaultId);
         return true;
     }
 
@@ -115,7 +118,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof,
         bytes[] memory encryptedMessages,
         bytes calldata encryptedBurnUpdate
-    ) public checkFreeze nonReentrant returns (bool) {
+    ) external checkFreeze nonReentrant returns (bool) {
         // Reject before stripping hashCommitment so an empty proof doesn't panic on underflow
         if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
 
@@ -165,18 +168,18 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         bytes[] memory encryptedMessages,
         IDvp.ProofReceipt memory transaction,
         bytes calldata encryptedMintUpdate
-    ) public checkFreeze nonReentrant returns (bool) {
+    ) external checkFreeze nonReentrant returns (bool) {
         if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
 
         // Bind the credit to the burned value: the proof's last signal (paymentCommitment) must
-        // equal the receipt's payment output. Zero is rejected as an uninitialised value or a bug.
-        // The receipt is only trusted because processWithdraw -> EnygmaCoinVault.withdraw
-        // verifies its join-split proof, roots and nullifiers; this check relies on that.
-        if (
-            transaction.commitments.length == 0 ||
-            transaction.commitments[0] == 0 ||
-            transaction.commitments[0] != proof.public_signal[proof.public_signal.length - 1]
-        ) {
+        // equal the receipt's payment output. This is a fail-fast check, not a complete one: it is
+        // sound only because verifyWithdrawProof authenticates the signal and processWithdraw
+        // authenticates the receipt below. Both must stay in this function.
+        if (transaction.commitments.length == 0) revert EnygmaDvpIntegration__PaymentCommitmentMismatch();
+        uint256 receiptPayment = transaction.commitments[0];
+        // Rejecting a zero receipt also rejects a zero proof signal, since the two must be equal.
+        if (receiptPayment == 0) revert EnygmaDvpIntegration__ZeroPaymentCommitment();
+        if (receiptPayment != proof.public_signal[proof.public_signal.length - 1]) {
             revert EnygmaDvpIntegration__PaymentCommitmentMismatch();
         }
 
@@ -220,9 +223,8 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         if (_vaultId == 0) revert EnygmaDvpIntegration__VaultIdNotInitialized();
         if (_dvpAddress == address(0)) revert EnygmaDvpIntegration__DvpNotSet();
 
-        IDvp dvp = IDvp(_dvpAddress);
-        bool successDvpCall = dvp.mixFunds(_vaultId, transaction);
-        return successDvpCall;
+        if (!IDvp(_dvpAddress).mixFunds(_vaultId, transaction)) revert EnygmaDvpIntegration__DvpCallFailed();
+        return true;
     }
 
     // Extract proof data from transfer proof (mirrors EnygmaV1.extractProofData)
@@ -303,7 +305,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         revert EnygmaDvpIntegration__InvalidPublicSignalLength(length);
     }
 
-    function verifyDepositProof(uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view returns (bool) {
+    function verifyDepositProof(uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view {
         // DepositToDvp sizes: 8*k + 3 = k2:19, k3:27, k4:35, k5:43, k6:51
         if (k == 2) {
             if (!IEnygmaDepositToDvpVerifierk2(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array19(proof.public_signal))) {
@@ -328,10 +330,9 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         } else {
             revert EnygmaDvpIntegration__UnsupportedK(k);
         }
-        return true;
     }
 
-    function verifyWithdrawProof(uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view returns (bool) {
+    function verifyWithdrawProof(uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view {
         // WithdrawFromDvp sizes: 8*k + 3 = k2:19, k3:27, k4:35, k5:43, k6:51 (same as DepositToDvp)
         if (k == 2) {
             if (!IEnygmaWithdrawFromDvpVerifierk2(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array19(proof.public_signal))) {
@@ -356,7 +357,6 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         } else {
             revert EnygmaDvpIntegration__UnsupportedK(k);
         }
-        return true;
     }
 
     function processDeposit(uint256 hashCommitment) internal returns (bool) {

@@ -34,6 +34,8 @@ interface IEnygmaDvpIntegration {
     event DepositToDvpSuccesful(uint256 indexed commitment, address enygmaContractAddress);
     event VerifierWithdrawFromDvpRegistered(address indexed verifierAddress, uint8 k);
     event WithdrawFromDvpSuccesful(IDvp.ProofReceipt transaction, address enygmaContractAddress);
+    event DvpRegistered(address indexed dvpAddress);
+    event VaultIdSet(uint256 vaultId);
 
     //ZK DVP functions
     function addDepositToDvpVerifier(address depositToDvpVerifier, uint8 k) external returns (bool);

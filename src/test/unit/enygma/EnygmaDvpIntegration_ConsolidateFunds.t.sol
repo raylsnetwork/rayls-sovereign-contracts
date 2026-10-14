@@ -54,6 +54,15 @@ contract EnygmaDvpIntegrationConsolidateFundsTest is Test {
         assertTrue(integration.consolidateFunds(receipt));
     }
 
+    /// @notice A false return from the DvP is surfaced as a revert, like deposit and withdraw.
+    function test_consolidateFunds_dvpReturnsFalse_reverts() public {
+        IDvp.ProofReceipt memory receipt;
+        vm.mockCall(dvp, abi.encodeWithSelector(IDvp.mixFunds.selector), abi.encode(false));
+
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__DvpCallFailed.selector);
+        integration.consolidateFunds(receipt);
+    }
+
     function test_SECURITY_consolidateFunds_reentry_reverts() public {
         ReenteringDvp reentrant = new ReenteringDvp();
         EnygmaDvpIntegration target = new EnygmaDvpIntegration(enygmaV1, factory);

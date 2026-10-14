@@ -196,6 +196,8 @@ contract EnygmaDvpIntegrationAccessControlTest is Test {
      */
     function test_factory_canAddDvp() public {
         vm.prank(factory);
+        vm.expectEmit(true, false, false, false, address(integration));
+        emit IEnygmaDvpIntegration.DvpRegistered(FAKE_DVP);
         bool result = integration.addDvp(FAKE_DVP);
         assertTrue(result);
         assertEq(integration.getDvpAddress(), FAKE_DVP);
@@ -206,6 +208,8 @@ contract EnygmaDvpIntegrationAccessControlTest is Test {
      */
     function test_factory_canSetVaultId() public {
         vm.prank(factory);
+        vm.expectEmit(false, false, false, true, address(integration));
+        emit IEnygmaDvpIntegration.VaultIdSet(FAKE_VAULT_ID);
         bool result = integration.setVaultId(FAKE_VAULT_ID);
         assertTrue(result);
         assertEq(integration.getVaultId(), FAKE_VAULT_ID);
@@ -244,6 +248,16 @@ contract EnygmaDvpIntegrationAccessControlTest is Test {
         vm.prank(factory);
         vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);
         integration.addWithdrawFromDvpVerifier(address(0), 2);
+    }
+
+    function test_constructor_zeroEnygma_reverts() public {
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);
+        new EnygmaDvpIntegration(address(0), factory);
+    }
+
+    function test_constructor_zeroFactory_reverts() public {
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);
+        new EnygmaDvpIntegration(enygmaV1, address(0));
     }
 
     function test_addDvp_zeroAddress_reverts() public {

@@ -133,7 +133,7 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
 
     /// @notice A zero payment commitment on both sides must not pass the binding.
     function test_SECURITY_withdrawFromDvp_zeroPaymentCommitment_reverts() public {
-        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__PaymentCommitmentMismatch.selector);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroPaymentCommitment.selector);
         integration.withdrawFromDvp(_withdrawProof(0), new bytes[](0), _receipt(_commitments(0, 7)), "");
     }
 
@@ -153,6 +153,7 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         uint256 receiptCommitment
     ) public {
         vm.assume(proofCommitment != receiptCommitment);
+        vm.assume(receiptCommitment != 0); // a zero receipt has its own error, tested above
 
         vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__PaymentCommitmentMismatch.selector);
         integration.withdrawFromDvp(
