@@ -292,6 +292,13 @@ interface IDvp {
         bytes calldata encryptedBalanceUpdate
     ) external returns (bool);
 
+    /**
+     * @notice Spends the join-split receipt's input notes from the Enygma vault.
+     * @dev The implementation MUST fully verify `_tx` (join-split proof, merkle roots and
+     *      nullifiers) and revert if any check fails. EnygmaDvpIntegration.withdrawFromDvp binds
+     *      its Enygma credit to `_tx.commitments[0]` and relies on this call to authenticate the
+     *      receipt; weakening that verification would let a forged receipt back an Enygma credit.
+     */
     function withdrawEnygma(
         uint256 vaultId,
         IDvp.ProofReceipt memory _tx

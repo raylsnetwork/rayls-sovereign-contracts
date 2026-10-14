@@ -110,12 +110,12 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         );
     }
 
-    /// @notice An empty proof must revert with the binding error, not an index-underflow panic.
+    /// @notice An empty proof must revert with a dedicated error, not an index-underflow panic.
     function test_SECURITY_withdrawFromDvp_emptyProofSignals_reverts() public {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
         proof.public_signal = new uint256[](0);
 
-        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__PaymentCommitmentMismatch.selector);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__EmptyPublicSignals.selector);
         integration.withdrawFromDvp(proof, new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), "");
     }
 
@@ -134,6 +134,29 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
     function test_SECURITY_withdrawFromDvp_zeroPaymentCommitment_reverts() public {
         vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__PaymentCommitmentMismatch.selector);
         integration.withdrawFromDvp(_withdrawProof(0), new bytes[](0), _receipt(_commitments(0, 7)), "");
+    }
+
+    /// @notice Any non-zero commitment, up to the top of the uint256 range, binds when both sides match.
+    function testFuzz_withdrawFromDvp_matchingPaymentCommitment_succeeds(uint256 commitment) public {
+        vm.assume(commitment != 0);
+
+        bool ok = integration.withdrawFromDvp(
+            _withdrawProof(commitment), new bytes[](0), _receipt(_commitments(commitment, 7)), ""
+        );
+        assertTrue(ok);
+    }
+
+    /// @notice Any difference between the proof's commitment and the receipt's payment output reverts.
+    function testFuzz_SECURITY_withdrawFromDvp_mismatchedPaymentCommitment_reverts(
+        uint256 proofCommitment,
+        uint256 receiptCommitment
+    ) public {
+        vm.assume(proofCommitment != receiptCommitment);
+
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__PaymentCommitmentMismatch.selector);
+        integration.withdrawFromDvp(
+            _withdrawProof(proofCommitment), new bytes[](0), _receipt(_commitments(receiptCommitment, 7)), ""
+        );
     }
 
     /// @notice The old 8k + 12 layout (10 trailing note hashes) is no longer a valid withdraw proof.

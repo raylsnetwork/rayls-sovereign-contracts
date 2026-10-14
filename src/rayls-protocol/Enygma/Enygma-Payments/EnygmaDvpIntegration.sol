@@ -33,7 +33,10 @@ contract EnygmaDvpIntegration {
     mapping(uint256 => address) public withdrawFromDvpVerifiers;
 
     error EnygmaDvpIntegration__OnlyFactoryAllowed();
+    /// @dev The withdraw proof's PaymentCommitment does not equal the receipt's commitments[0],
+    ///      the receipt has no outputs, or the commitment is zero.
     error EnygmaDvpIntegration__PaymentCommitmentMismatch();
+    /// @dev The proof has no public signals, so there is no trailing commitment to strip.
     error EnygmaDvpIntegration__EmptyPublicSignals();
 
     modifier onlyFactory() {
@@ -132,18 +135,30 @@ contract EnygmaDvpIntegration {
         return true;
     }
 
+    /**
+     * @notice Credits Enygma with the value paid out of a DvP join-split.
+     * @dev Invariants this function depends on:
+     *      - The proof's last public signal (PaymentCommitment) must equal `transaction.commitments[0]`;
+     *        this is what ties the credited amount to the burned DvP notes.
+     *      - A commitment of 0 is rejected. Commitments are Poseidon outputs, so a valid one is never
+     *        0; a circuit change that could yield 0 must revisit this guard.
+     *      - `transaction` is NOT verified here. It is trusted only because `processWithdraw` ->
+     *        `IDvp.withdrawEnygma` -> `EnygmaCoinVault.withdraw` verifies its join-split proof, roots
+     *        and nullifiers, and the whole call reverts if that fails.
+     */
     function withdrawFromDvp(
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof,
         bytes[] memory encryptedMessages,
         IDvp.ProofReceipt memory transaction,
         bytes calldata encryptedMintUpdate
     ) public checkFreeze nonReentrant returns (bool) {
+        if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
+
         // Bind the credit to the burned value: the proof's last signal (paymentCommitment) must
         // equal the receipt's payment output. Zero is rejected even though Poseidon can't yield it.
         // The receipt is only trusted because processWithdraw -> EnygmaCoinVault.withdraw
         // verifies its join-split proof, roots and nullifiers; this check relies on that.
         if (
-            proof.public_signal.length == 0 ||
             transaction.commitments.length == 0 ||
             transaction.commitments[0] == 0 ||
             transaction.commitments[0] != proof.public_signal[proof.public_signal.length - 1]
