@@ -102,6 +102,14 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         );
     }
 
+    /// @notice A receipt with only the payment output (no change) is the intended success case.
+    function test_withdrawFromDvp_singleOutputReceipt_succeeds() public {
+        uint256[] memory c = new uint256[](1);
+        c[0] = PAYMENT_COMMITMENT;
+
+        assertTrue(integration.withdrawFromDvp(_withdrawProof(PAYMENT_COMMITMENT), new bytes[](0), _receipt(c), ""));
+    }
+
     function test_SECURITY_withdrawFromDvp_otherPaymentCommitment_reverts() public {
         vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__PaymentCommitmentMismatch.selector);
         integration.withdrawFromDvp(

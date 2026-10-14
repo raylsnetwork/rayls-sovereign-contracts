@@ -122,12 +122,13 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof,
         bytes[] memory encryptedMessages,
         bytes calldata encryptedBurnUpdate
-    ) external checkFreeze nonReentrant returns (bool) {
+    ) external nonReentrant checkFreeze returns (bool) {
         // Reject before stripping hashCommitment so an empty proof doesn't panic on underflow
         if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
         // hashCommitment is the extra element at the end of the deposit proof
         uint256 hashCommitment = proof.public_signal[proof.public_signal.length - 1];
         if (hashCommitment == 0) revert EnygmaDvpIntegration__ZeroHashCommitment();
+        _dvpConfig(); // fail before proof verification if the integration isn't configured
 
         // Convert to transfer proof and extract all data in one place
         IEnygmaV1.TransferProof memory transferProof = _stripTrailingSignal(proof);
@@ -167,17 +168,21 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
      *        `IDvp.withdrawEnygma` -> `EnygmaCoinVault.withdraw` verifies its join-split proof, roots
      *        and nullifiers, and the whole call reverts if that fails. This is only as strong as the
      *        contract at `_dvpAddress`, which only the factory can set (`addDvp`).
+     * @custom:security-invariant _checkPaymentBinding, _verifyZkProof and processWithdraw must all run in
+     *        this one call. The binding alone proves nothing; moving either authentication step to
+     *        another entry point reopens the inflated-credit exploit.
      */
     function withdrawFromDvp(
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof,
         bytes[] memory encryptedMessages,
         IDvp.ProofReceipt memory transaction,
         bytes calldata encryptedMintUpdate
-    ) external checkFreeze nonReentrant returns (bool) {
+    ) external nonReentrant checkFreeze returns (bool) {
         if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
 
         // Fail-fast binding check; see _checkPaymentBinding for why the calls below must stay here.
         _checkPaymentBinding(proof, transaction);
+        _dvpConfig(); // fail before proof verification if the integration isn't configured
 
         // Convert to transfer proof and extract all data in one place
         IEnygmaV1.TransferProof memory transferProof = _stripTrailingSignal(proof);
@@ -321,7 +326,9 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     /**
      * @dev Verifies a deposit or withdraw proof against `verifier`. Deposit and withdraw circuits share
      *      the 8k + 3 public-signal layout and the same verifyProof ABI per k, so one dispatch table
-     *      serves both; the caller picks the verifier mapping.
+     *      serves both; the caller picks the verifier mapping. The IEnygmaDepositToDvpVerifierkN types are
+     *      used for both families; EnygmaDvpIntegration_VerifierAbi.t.sol fails if the deposit and
+     *      withdraw selectors ever diverge, at which point this must split per family.
      */
     function _verifyZkProof(address verifier, uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view {
         if (verifier == address(0)) revert EnygmaDvpIntegration__VerifierNotSet(k);

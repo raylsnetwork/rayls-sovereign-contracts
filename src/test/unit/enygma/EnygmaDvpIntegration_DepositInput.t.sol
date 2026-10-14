@@ -71,6 +71,18 @@ contract EnygmaDvpIntegrationDepositInputTest is Test {
         assertTrue(integration.depositToDvp(proof, new bytes[](0), ""));
     }
 
+    /// @notice An integration without a vault id fails before the (expensive) proof verification.
+    function test_depositToDvp_unconfigured_revertsBeforeVerifier() public {
+        EnygmaDvpIntegration fresh = new EnygmaDvpIntegration(enygmaV1, factory);
+        IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
+        proof.public_signal = new uint256[](8 * 2 + 3);
+        proof.public_signal[8 * 2 + 2] = HASH_COMMITMENT;
+
+        vm.expectCall(verifier, abi.encodeWithSelector(IEnygmaDepositToDvpVerifierk2.verifyProof.selector), 0);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__VaultIdNotInitialized.selector);
+        fresh.depositToDvp(proof, new bytes[](0), "");
+    }
+
     /// @notice A zero hashCommitment would insert a trivially known note into the vault.
     function test_SECURITY_depositToDvp_zeroHashCommitment_reverts() public {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
