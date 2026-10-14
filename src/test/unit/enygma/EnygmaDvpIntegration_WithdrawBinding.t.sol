@@ -126,12 +126,14 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
     }
 
     /// @notice The old 8k + 12 layout (10 trailing note hashes) is no longer a valid withdraw proof.
+    /// @dev The last signal matches the receipt, so the binding passes; the rejection must come
+    ///      from the layout itself (8k + 11 transfer signals match no supported k).
     function test_withdrawFromDvp_oldPublicSignalLayout_reverts() public {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
         proof.public_signal = new uint256[](8 * K + 12);
         proof.public_signal[8 * K + 11] = PAYMENT_COMMITMENT;
 
-        vm.expectRevert();
+        vm.expectRevert(bytes("Invalid transfer proof public_signal length"));
         integration.withdrawFromDvp(proof, new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), "");
     }
 }

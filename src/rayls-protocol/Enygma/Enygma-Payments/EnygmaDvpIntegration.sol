@@ -140,7 +140,8 @@ contract EnygmaDvpIntegration {
         // The length checks come first so malformed input reverts with the custom error
         // rather than an index panic. A zero commitment is rejected explicitly: the circuit
         // computes it as a Poseidon hash (so 0 is unreachable), but the binding must not
-        // rely on that property.
+        // rely on that property. Guarding commitments[0] also covers the proof's signal,
+        // since the two must be equal to pass.
         if (
             proof.public_signal.length == 0 ||
             transaction.commitments.length == 0 ||
