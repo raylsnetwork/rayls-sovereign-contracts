@@ -89,7 +89,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
 
     /// @dev Overwrites any verifier already set for `k`, unlike the set-once `setVaultId`: the factory
     ///      re-registers verifiers when a trusted-setup ceremony rotates the keys.
-    function addDepositToDvpVerifier(address depositToDvpVerifier, uint8 k) public onlyFactory returns (bool) {
+    function addDepositToDvpVerifier(address depositToDvpVerifier, uint8 k) external onlyFactory returns (bool) {
         if (depositToDvpVerifier == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         depositToDvpVerifiers[k] = depositToDvpVerifier;
         emit IEnygmaDvpIntegration.VerifierDepositToDvpRegistered(depositToDvpVerifier, k);
@@ -97,21 +97,21 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     }
 
     /// @dev Overwrites any verifier already set for `k`; see addDepositToDvpVerifier.
-    function addWithdrawFromDvpVerifier(address withdrawFromDvpVerifier, uint8 k) public onlyFactory returns (bool) {
+    function addWithdrawFromDvpVerifier(address withdrawFromDvpVerifier, uint8 k) external onlyFactory returns (bool) {
         if (withdrawFromDvpVerifier == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         withdrawFromDvpVerifiers[k] = withdrawFromDvpVerifier;
         emit IEnygmaDvpIntegration.VerifierWithdrawFromDvpRegistered(withdrawFromDvpVerifier, k);
         return true;
     }
 
-    function addDvp(address dvpAddress) public onlyFactory returns (bool) {
+    function addDvp(address dvpAddress) external onlyFactory returns (bool) {
         if (dvpAddress == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         _dvpAddress = dvpAddress;
         emit IEnygmaDvpIntegration.DvpRegistered(dvpAddress);
         return true;
     }
 
-    function setVaultId(uint256 vaultId) public onlyFactory returns (bool) {
+    function setVaultId(uint256 vaultId) external onlyFactory returns (bool) {
         if (_vaultId != 0) revert EnygmaDvpIntegration__VaultIdAlreadySet();
         if (vaultId == 0) revert EnygmaDvpIntegration__InvalidVaultId();
         _vaultId = vaultId;
@@ -226,7 +226,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
      *      contract is the only Enygma entry point to it; that gate is not a caller check.
      * @param transaction The join-split receipt to apply.
      */
-    function consolidateFunds(IDvp.ProofReceipt memory transaction) public nonReentrant returns (bool) {
+    function consolidateFunds(IDvp.ProofReceipt memory transaction) external nonReentrant returns (bool) {
         if (_vaultId == 0) revert EnygmaDvpIntegration__VaultIdNotInitialized();
         if (_dvpAddress == address(0)) revert EnygmaDvpIntegration__DvpNotSet();
 
