@@ -22,8 +22,8 @@ contract EnygmaDvpIntegrationDepositInputTest is Test {
         enygmaV1 = makeAddr("enygmaV1");
         tokenRegistry = makeAddr("tokenRegistry");
 
-        vm.etch(enygmaV1, hex"00");
-        vm.etch(tokenRegistry, hex"00");
+        vm.etch(enygmaV1, hex"fe");
+        vm.etch(tokenRegistry, hex"fe");
 
         integration = new EnygmaDvpIntegration(enygmaV1, factory);
 

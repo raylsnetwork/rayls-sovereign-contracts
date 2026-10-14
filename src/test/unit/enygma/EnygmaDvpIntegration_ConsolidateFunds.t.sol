@@ -36,7 +36,7 @@ contract EnygmaDvpIntegrationConsolidateFundsTest is Test {
         factory = makeAddr("factory");
         enygmaV1 = makeAddr("enygmaV1");
         dvp = makeAddr("dvp");
-        vm.etch(dvp, hex"00");
+        vm.etch(dvp, hex"fe");
 
         integration = new EnygmaDvpIntegration(enygmaV1, factory);
         vm.startPrank(factory);

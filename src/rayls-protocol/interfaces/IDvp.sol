@@ -298,6 +298,9 @@ interface IDvp {
      *      nullifiers) and revert if any check fails. EnygmaDvpIntegration.withdrawFromDvp binds
      *      its Enygma credit to `_tx.commitments[0]` and relies on this call to authenticate the
      *      receipt; weakening that verification would let a forged receipt back an Enygma credit.
+     * @param vaultId The Enygma coin vault to spend from.
+     * @param _tx The join-split receipt whose input notes are spent.
+     * @return True on success; reverts if the receipt fails verification.
      */
     function withdrawEnygma(
         uint256 vaultId,

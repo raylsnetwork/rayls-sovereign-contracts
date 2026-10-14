@@ -32,11 +32,12 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         dvp = makeAddr("dvp");
         verifier = makeAddr("verifier");
 
-        // High-level calls require code at the target; mocks answer the calls.
-        vm.etch(enygmaV1, hex"00");
-        vm.etch(tokenRegistry, hex"00");
-        vm.etch(dvp, hex"00");
-        vm.etch(verifier, hex"00");
+        // High-level calls require code at the target; mocks answer the calls. INVALID (0xfe)
+        // makes any call that lacks a mock revert instead of silently returning nothing.
+        vm.etch(enygmaV1, hex"fe");
+        vm.etch(tokenRegistry, hex"fe");
+        vm.etch(dvp, hex"fe");
+        vm.etch(verifier, hex"fe");
 
         integration = new EnygmaDvpIntegration(enygmaV1, factory);
         vm.startPrank(factory);

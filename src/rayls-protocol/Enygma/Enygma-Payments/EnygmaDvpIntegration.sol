@@ -157,7 +157,8 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
      *        output of 0 is possible only with negligible (~2^-254) probability.
      *      - `transaction` is NOT verified here. It is trusted only because `processWithdraw` ->
      *        `IDvp.withdrawEnygma` -> `EnygmaCoinVault.withdraw` verifies its join-split proof, roots
-     *        and nullifiers, and the whole call reverts if that fails.
+     *        and nullifiers, and the whole call reverts if that fails. This is only as strong as the
+     *        contract at `_dvpAddress`, which only the factory can set (`addDvp`).
      */
     function withdrawFromDvp(
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof,
@@ -382,7 +383,9 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         transferProof.pi_b = proof.pi_b;
         transferProof.pi_c = proof.pi_c;
 
-        // Create a new array without last item (paymentCommitment)
+        // Create a new array without last item (paymentCommitment). Callers check this too; repeated here so
+        // the helper is safe on its own.
+        if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
         uint256[] memory adjustedPublicSignal = new uint256[](proof.public_signal.length - 1);
         for (uint256 i = 0; i < proof.public_signal.length - 1; i++) {
             adjustedPublicSignal[i] = proof.public_signal[i];
@@ -398,7 +401,9 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         transferProof.pi_b = proof.pi_b;
         transferProof.pi_c = proof.pi_c;
 
-        // Create a new array without last item (hashCommitment)
+        // Create a new array without last item (hashCommitment). Callers check this too; repeated here so
+        // the helper is safe on its own.
+        if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
         uint256[] memory adjustedPublicSignal = new uint256[](proof.public_signal.length - 1);
         for (uint256 i = 0; i < proof.public_signal.length - 1; i++) {
             adjustedPublicSignal[i] = proof.public_signal[i];
