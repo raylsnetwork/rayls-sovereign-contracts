@@ -260,6 +260,16 @@ contract EnygmaDvpIntegrationAccessControlTest is Test {
         new EnygmaDvpIntegration(enygmaV1, address(0));
     }
 
+    function testFuzz_addVerifiers_unsupportedK_reverts(uint8 k) public {
+        vm.assume(k < 2 || k > 6);
+        vm.startPrank(factory);
+        vm.expectRevert(abi.encodeWithSelector(EnygmaDvpIntegration.EnygmaDvpIntegration__UnsupportedK.selector, k));
+        integration.addDepositToDvpVerifier(FAKE_VERIFIER, k);
+        vm.expectRevert(abi.encodeWithSelector(EnygmaDvpIntegration.EnygmaDvpIntegration__UnsupportedK.selector, k));
+        integration.addWithdrawFromDvpVerifier(FAKE_VERIFIER, k);
+        vm.stopPrank();
+    }
+
     function test_addDvp_zeroAddress_reverts() public {
         vm.prank(factory);
         vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);

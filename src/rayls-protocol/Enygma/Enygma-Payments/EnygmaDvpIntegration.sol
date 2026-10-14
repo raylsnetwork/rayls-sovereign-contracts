@@ -93,6 +93,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     ///      re-registers verifiers when a trusted-setup ceremony rotates the keys.
     function addDepositToDvpVerifier(address depositToDvpVerifier, uint8 k) external onlyFactory returns (bool) {
         if (depositToDvpVerifier == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
+        _requireSupportedK(k);
         depositToDvpVerifiers[k] = depositToDvpVerifier;
         emit IEnygmaDvpIntegration.VerifierDepositToDvpRegistered(depositToDvpVerifier, k);
         return true;
@@ -101,6 +102,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     /// @dev Overwrites any verifier already set for `k`; see addDepositToDvpVerifier.
     function addWithdrawFromDvpVerifier(address withdrawFromDvpVerifier, uint8 k) external onlyFactory returns (bool) {
         if (withdrawFromDvpVerifier == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
+        _requireSupportedK(k);
         withdrawFromDvpVerifiers[k] = withdrawFromDvpVerifier;
         emit IEnygmaDvpIntegration.VerifierWithdrawFromDvpRegistered(withdrawFromDvpVerifier, k);
         return true;
@@ -224,6 +226,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     function consolidateFunds(IDvp.ProofReceipt memory transaction) external nonReentrant checkFreeze returns (bool) {
         DvpConfig memory config = _dvpConfig();
         if (!IDvp(config.dvpAddress).mixFunds(config.vaultId, transaction)) revert EnygmaDvpIntegration__DvpCallFailed();
+        emit IEnygmaDvpIntegration.ConsolidateFundsSuccessful(transaction, address(_enygmaV1));
         return true;
     }
 
@@ -338,6 +341,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     ) internal returns (IEnygmaV1.TransferProof memory transferProof, IEnygmaV1.ExtractedProofData memory proofData) {
         transferProof = _stripTrailingSignal(proof);
         proofData = _extractProofDataFromTransferProof(transferProof);
+        // dvpValidateTransferInputs is a view check and far cheaper than the pairing, so it runs first.
         _enygmaV1.dvpValidateTransferInputs(transferProof);
         _verifyZkProof(verifiers[proofData.k], proofData.k, proof);
     }
@@ -372,6 +376,11 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
 
     function processWithdraw(DvpConfig memory config, IDvp.ProofReceipt memory transaction) private returns (bool) {
         return IDvp(config.dvpAddress).withdrawEnygma(config.vaultId, transaction);
+    }
+
+    /// @dev k must be one the verifier dispatch handles (2-6), so bad registrations fail at the setter.
+    function _requireSupportedK(uint8 k) internal pure {
+        if (k < 2 || k > 6) revert EnygmaDvpIntegration__UnsupportedK(k);
     }
 
     /// @dev Reads the vault id and DvP address once, reverting if either is unset.

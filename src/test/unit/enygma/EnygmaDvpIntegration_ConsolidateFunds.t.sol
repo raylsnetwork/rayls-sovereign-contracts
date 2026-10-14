@@ -60,6 +60,9 @@ contract EnygmaDvpIntegrationConsolidateFundsTest is Test {
         vm.mockCall(dvp, abi.encodeWithSelector(IDvp.mixFunds.selector), abi.encode(true));
         vm.expectCall(dvp, abi.encodeWithSelector(IDvp.mixFunds.selector, VAULT_ID, receipt));
 
+        vm.expectEmit(false, false, false, true, address(integration));
+        emit IEnygmaDvpIntegration.ConsolidateFundsSuccessful(receipt, enygmaV1);
+
         vm.prank(makeAddr("relayer"));
         assertTrue(integration.consolidateFunds(receipt));
     }
