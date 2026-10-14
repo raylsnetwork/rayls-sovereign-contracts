@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import "../../../rayls-protocol/Enygma/Enygma-Payments/EnygmaDvpIntegration.sol";
+import "../../../rayls-protocol/interfaces/IEnygmaWithdrawFromDvpVerifierk2.sol";
 
 /**
  * @title Security Test: withdrawFromDvp binds the credit to the burned DvP payment
@@ -82,10 +83,12 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
     function test_withdrawFromDvp_matchingPaymentCommitment_succeeds() public {
         vm.expectCall(verifier, abi.encodeWithSelector(IEnygmaWithdrawFromDvpVerifierk2.verifyProof.selector));
         vm.expectCall(dvp, abi.encodeWithSelector(IDvp.withdrawEnygma.selector));
+        IDvp.ProofReceipt memory receipt = _receipt(_commitments(PAYMENT_COMMITMENT, 7));
+        // The event names the Enygma contract, not the caller.
+        vm.expectEmit(false, false, false, true, address(integration));
+        emit IEnygmaDvpIntegration.WithdrawFromDvpSuccesful(receipt, enygmaV1);
 
-        bool ok = integration.withdrawFromDvp(
-            _withdrawProof(PAYMENT_COMMITMENT), new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), ""
-        );
+        bool ok = integration.withdrawFromDvp(_withdrawProof(PAYMENT_COMMITMENT), new bytes[](0), receipt, "");
         assertTrue(ok);
     }
 
@@ -115,7 +118,7 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
     }
 
     function test_SECURITY_withdrawFromDvp_receiptWithoutOutputs_reverts() public {
-        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__PaymentCommitmentMismatch.selector);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__EmptyReceiptCommitments.selector);
         integration.withdrawFromDvp(
             _withdrawProof(PAYMENT_COMMITMENT), new bytes[](0), _receipt(new uint256[](0)), ""
         );
