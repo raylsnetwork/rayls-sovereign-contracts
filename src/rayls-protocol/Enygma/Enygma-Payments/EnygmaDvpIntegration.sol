@@ -17,12 +17,13 @@ import '../../interfaces/IEnygmaDvpIntegration.sol';
 import '../../../privateHub/TokenRegistry/TokenRegistryV1.sol';
 import '../../../rayls-protocol-sdk/interfaces/IRaylsEndpoint.sol';
 import './EnygmaV1.sol';
+import {ReentrancyGuard} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 /**
  * @title EnygmaDvpIntegration
  * @dev Extension contract for EnygmaV1 that adds DVP functionality
  */
-contract EnygmaDvpIntegration {
+contract EnygmaDvpIntegration is ReentrancyGuard {
     EnygmaV1 private _enygmaV1;
     address private _dvpAddress;
     address private _enygmaV1Address;
@@ -57,8 +58,6 @@ contract EnygmaDvpIntegration {
         factory = _factory;
     }
 
-    bool private _processing;
-
     modifier checkFreeze() {
         address tokenRegistryContract = _enygmaV1.tokenRegistryContract();
         TokenRegistryV1 tokenRegistry = TokenRegistryV1(tokenRegistryContract);
@@ -67,13 +66,6 @@ contract EnygmaDvpIntegration {
         bool isFrozen = tokenRegistry.isTokenFrozenForParticipant(resourceId, currentChainId);
         require(!isFrozen, 'Token is in freeze status for this participant');
         _;
-    }
-
-    modifier nonReentrant() {
-        require(!_processing, "ReentrancyGuard: reentrant call");
-        _processing = true;
-        _;
-        _processing = false;
     }
 
     function addDepositToDvpVerifier(address depositToDvpVerifier, uint8 k) public onlyFactory returns (bool) {
@@ -199,7 +191,15 @@ contract EnygmaDvpIntegration {
         return true;
     }
 
-    function consolidateFunds(IDvp.ProofReceipt memory transaction) public returns (bool) {
+    /**
+     * @notice Merges DvP vault notes into new outputs via a join-split receipt.
+     * @dev Permissionless by design: anyone may relay a valid receipt. Authorisation comes from the
+     *      receipt itself, which `Dvp.mixFunds` -> `EnygmaCoinVault.transfer` verifies (join-split
+     *      proof, roots, nullifiers) before spending any note. `Dvp.mixFunds` is `restricted`, so this
+     *      contract is the only Enygma entry point to it; that gate is not a caller check.
+     * @param transaction The join-split receipt to apply.
+     */
+    function consolidateFunds(IDvp.ProofReceipt memory transaction) public nonReentrant returns (bool) {
         require(_vaultId != 0, 'VaultId not initialized');
         require(_dvpAddress != address(0), 'Dvp address not set');
 
