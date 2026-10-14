@@ -119,6 +119,17 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         integration.withdrawFromDvp(proof, new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), "");
     }
 
+    /// @notice A proof carrying only the payment commitment passes the binding but has no
+    ///         transfer signals, so it is rejected by the layout check.
+    function test_withdrawFromDvp_onlyPaymentCommitmentSignal_reverts() public {
+        IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
+        proof.public_signal = new uint256[](1);
+        proof.public_signal[0] = PAYMENT_COMMITMENT;
+
+        vm.expectRevert(bytes("Invalid transfer proof public_signal length"));
+        integration.withdrawFromDvp(proof, new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), "");
+    }
+
     /// @notice A zero payment commitment on both sides must not pass the binding.
     function test_SECURITY_withdrawFromDvp_zeroPaymentCommitment_reverts() public {
         vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__PaymentCommitmentMismatch.selector);

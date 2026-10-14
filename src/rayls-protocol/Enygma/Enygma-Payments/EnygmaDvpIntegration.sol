@@ -134,14 +134,10 @@ contract EnygmaDvpIntegration {
         IDvp.ProofReceipt memory transaction,
         bytes calldata encryptedMintUpdate
     ) public checkFreeze nonReentrant returns (bool) {
-        // The withdraw proof opens its last public input (paymentCommitment) with the
-        // credited amount; the join-split receipt's first output is the payment its burned
-        // notes paid out. Requiring them to be equal ties the credit to the burned value.
-        // The length checks come first so malformed input reverts with the custom error
-        // rather than an index panic. A zero commitment is rejected explicitly: the circuit
-        // computes it as a Poseidon hash (so 0 is unreachable), but the binding must not
-        // rely on that property. Guarding commitments[0] also covers the proof's signal,
-        // since the two must be equal to pass.
+        // Bind the credit to the burned value: the proof's last signal (paymentCommitment) must
+        // equal the receipt's payment output. Zero is rejected even though Poseidon can't yield it.
+        // The receipt is only trusted because processWithdraw -> EnygmaCoinVault.withdraw
+        // verifies its join-split proof, roots and nullifiers; this check relies on that.
         if (
             proof.public_signal.length == 0 ||
             transaction.commitments.length == 0 ||
