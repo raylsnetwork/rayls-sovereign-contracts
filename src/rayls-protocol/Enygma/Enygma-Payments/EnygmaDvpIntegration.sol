@@ -158,7 +158,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         // Update lastblockNumPending
         _enygmaV1.dvpSetLastblockNumPending(proofData.blockNumber);
 
-        emit IEnygmaDvpIntegration.DepositToDvpSuccesful(hashCommitment, address(_enygmaV1));
+        emit IEnygmaDvpIntegration.DepositToDvpSuccessful(hashCommitment, address(_enygmaV1));
         return true;
     }
 
@@ -209,7 +209,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         // Update lastblockNumPending
         _enygmaV1.dvpSetLastblockNumPending(proofData.blockNumber);
 
-        emit IEnygmaDvpIntegration.WithdrawFromDvpSuccesful(transaction, address(_enygmaV1));
+        emit IEnygmaDvpIntegration.WithdrawFromDvpSuccessful(transaction, address(_enygmaV1));
         return true;
     }
 

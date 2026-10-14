@@ -66,7 +66,7 @@ contract EnygmaDvpIntegrationDepositInputTest is Test {
         vm.expectCall(verifier, abi.encodeWithSelector(IEnygmaDepositToDvpVerifierk2.verifyProof.selector));
         vm.expectCall(dvp, abi.encodeWithSelector(IDvp.depositEnygma.selector, uint256(1), HASH_COMMITMENT));
         vm.expectEmit(true, false, false, true, address(integration));
-        emit IEnygmaDvpIntegration.DepositToDvpSuccesful(HASH_COMMITMENT, enygmaV1);
+        emit IEnygmaDvpIntegration.DepositToDvpSuccessful(HASH_COMMITMENT, enygmaV1);
 
         assertTrue(integration.depositToDvp(proof, new bytes[](0), ""));
     }

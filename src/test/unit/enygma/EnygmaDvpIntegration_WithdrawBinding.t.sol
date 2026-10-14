@@ -86,7 +86,7 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         IDvp.ProofReceipt memory receipt = _receipt(_commitments(PAYMENT_COMMITMENT, 7));
         // The event names the Enygma contract, not the caller.
         vm.expectEmit(false, false, false, true, address(integration));
-        emit IEnygmaDvpIntegration.WithdrawFromDvpSuccesful(receipt, enygmaV1);
+        emit IEnygmaDvpIntegration.WithdrawFromDvpSuccessful(receipt, enygmaV1);
 
         bool ok = integration.withdrawFromDvp(_withdrawProof(PAYMENT_COMMITMENT), new bytes[](0), receipt, "");
         assertTrue(ok);
