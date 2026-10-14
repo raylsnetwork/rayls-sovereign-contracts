@@ -57,6 +57,12 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     /// @dev The DvP contract returned false.
     error EnygmaDvpIntegration__DvpCallFailed();
 
+    /// @dev Vault id and DvP address, read from storage once per call (one stack slot as a memory struct).
+    struct DvpConfig {
+        uint256 vaultId;
+        address dvpAddress;
+    }
+
     modifier onlyFactory() {
         if (msg.sender != factory) revert EnygmaDvpIntegration__OnlyFactoryAllowed();
         _;
@@ -128,21 +134,18 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         // hashCommitment is the extra element at the end of the deposit proof
         uint256 hashCommitment = proof.public_signal[proof.public_signal.length - 1];
         if (hashCommitment == 0) revert EnygmaDvpIntegration__ZeroHashCommitment();
-        _dvpConfig(); // fail before proof verification if the integration isn't configured
+        // Read once, before proof verification, so an unconfigured integration fails cheaply
+        DvpConfig memory config = _dvpConfig();
 
-        // Convert to transfer proof and extract all data in one place
-        IEnygmaV1.TransferProof memory transferProof = _stripTrailingSignal(proof);
-        IEnygmaV1.ExtractedProofData memory proofData = _extractProofDataFromTransferProof(transferProof);
-
-        // Validate inputs and verify deposit proof
-        _enygmaV1.dvpValidateTransferInputs(transferProof);
-        _verifyZkProof(depositToDvpVerifiers[proofData.k], proofData.k, proof);
+        // Strip the trailing signal, validate the transfer inputs and verify the deposit proof
+        (IEnygmaV1.TransferProof memory transferProof, IEnygmaV1.ExtractedProofData memory proofData) =
+            _prepareAndVerify(proof, depositToDvpVerifiers);
 
         // Finalize pending transactions
         _enygmaV1.dvpFinalisePendingTransactions(proofData.blockNumber);
 
         // Process deposit
-        if (!processDeposit(hashCommitment)) revert EnygmaDvpIntegration__DvpCallFailed();
+        if (!IDvp(config.dvpAddress).depositEnygma(config.vaultId, hashCommitment)) revert EnygmaDvpIntegration__DvpCallFailed();
 
         // Add the current transaction to pending balances
         _enygmaV1.dvpAddPendingTransaction(transferProof, IEnygmaV1.TxType.Deposit);
@@ -182,21 +185,18 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
 
         // Fail-fast binding check; see _checkPaymentBinding for why the calls below must stay here.
         _checkPaymentBinding(proof, transaction);
-        _dvpConfig(); // fail before proof verification if the integration isn't configured
+        // Read once, before proof verification, so an unconfigured integration fails cheaply
+        DvpConfig memory config = _dvpConfig();
 
-        // Convert to transfer proof and extract all data in one place
-        IEnygmaV1.TransferProof memory transferProof = _stripTrailingSignal(proof);
-        IEnygmaV1.ExtractedProofData memory proofData = _extractProofDataFromTransferProof(transferProof);
-
-        // Validate inputs and verify withdraw proof
-        _enygmaV1.dvpValidateTransferInputs(transferProof);
-        _verifyZkProof(withdrawFromDvpVerifiers[proofData.k], proofData.k, proof);
+        // Strip the trailing signal, validate the transfer inputs and verify the withdraw proof
+        (IEnygmaV1.TransferProof memory transferProof, IEnygmaV1.ExtractedProofData memory proofData) =
+            _prepareAndVerify(proof, withdrawFromDvpVerifiers);
 
         // Finalize pending transactions
         _enygmaV1.dvpFinalisePendingTransactions(proofData.blockNumber);
 
         // Process withdrawal
-        if (!processWithdraw(transaction)) revert EnygmaDvpIntegration__DvpCallFailed();
+        if (!processWithdraw(config, transaction)) revert EnygmaDvpIntegration__DvpCallFailed();
 
         // Add the current transaction to pending balances
         _enygmaV1.dvpAddPendingTransaction(transferProof, IEnygmaV1.TxType.Withdraw);
@@ -222,8 +222,8 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
      * @param transaction The join-split receipt to apply.
      */
     function consolidateFunds(IDvp.ProofReceipt memory transaction) external nonReentrant checkFreeze returns (bool) {
-        (uint256 vaultId, address dvpAddress) = _dvpConfig();
-        if (!IDvp(dvpAddress).mixFunds(vaultId, transaction)) revert EnygmaDvpIntegration__DvpCallFailed();
+        DvpConfig memory config = _dvpConfig();
+        if (!IDvp(config.dvpAddress).mixFunds(config.vaultId, transaction)) revert EnygmaDvpIntegration__DvpCallFailed();
         return true;
     }
 
@@ -316,6 +316,7 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof,
         IDvp.ProofReceipt memory transaction
     ) internal pure {
+        if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
         if (transaction.commitments.length == 0) revert EnygmaDvpIntegration__EmptyReceiptCommitments();
         uint256 receiptPayment = transaction.commitments[0];
         // A zero proof signal could only pass by matching a zero receipt, which is rejected here first,
@@ -324,6 +325,21 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         if (receiptPayment != proof.public_signal[proof.public_signal.length - 1]) {
             revert EnygmaDvpIntegration__PaymentCommitmentMismatch();
         }
+    }
+
+    /**
+     * @dev Shared front half of deposit and withdraw: strips the trailing signal into the 8k + 2
+     *      transfer layout, validates it with EnygmaV1 and verifies the full proof against the verifier
+     *      registered for its k in `verifiers`.
+     */
+    function _prepareAndVerify(
+        IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof,
+        mapping(uint8 => address) storage verifiers
+    ) internal returns (IEnygmaV1.TransferProof memory transferProof, IEnygmaV1.ExtractedProofData memory proofData) {
+        transferProof = _stripTrailingSignal(proof);
+        proofData = _extractProofDataFromTransferProof(transferProof);
+        _enygmaV1.dvpValidateTransferInputs(transferProof);
+        _verifyZkProof(verifiers[proofData.k], proofData.k, proof);
     }
 
     /**
@@ -354,22 +370,15 @@ contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
         if (!valid) revert EnygmaDvpIntegration__InvalidProof();
     }
 
-    function processDeposit(uint256 hashCommitment) private returns (bool) {
-        (uint256 vaultId, address dvpAddress) = _dvpConfig();
-        return IDvp(dvpAddress).depositEnygma(vaultId, hashCommitment);
-    }
-
-    function processWithdraw(IDvp.ProofReceipt memory transaction) private returns (bool) {
-        (uint256 vaultId, address dvpAddress) = _dvpConfig();
-        return IDvp(dvpAddress).withdrawEnygma(vaultId, transaction);
+    function processWithdraw(DvpConfig memory config, IDvp.ProofReceipt memory transaction) private returns (bool) {
+        return IDvp(config.dvpAddress).withdrawEnygma(config.vaultId, transaction);
     }
 
     /// @dev Reads the vault id and DvP address once, reverting if either is unset.
-    function _dvpConfig() internal view returns (uint256 vaultId, address dvpAddress) {
-        vaultId = _vaultId;
-        dvpAddress = _dvpAddress;
-        if (vaultId == 0) revert EnygmaDvpIntegration__VaultIdNotInitialized();
-        if (dvpAddress == address(0)) revert EnygmaDvpIntegration__DvpNotSet();
+    function _dvpConfig() internal view returns (DvpConfig memory config) {
+        config = DvpConfig({vaultId: _vaultId, dvpAddress: _dvpAddress});
+        if (config.vaultId == 0) revert EnygmaDvpIntegration__VaultIdNotInitialized();
+        if (config.dvpAddress == address(0)) revert EnygmaDvpIntegration__DvpNotSet();
     }
 
     /**
