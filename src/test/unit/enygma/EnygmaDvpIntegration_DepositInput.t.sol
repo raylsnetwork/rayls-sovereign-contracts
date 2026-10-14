@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import "../../../rayls-protocol/Enygma/Enygma-Payments/EnygmaDvpIntegration.sol";
 
 /**
  * @title Input validation for depositToDvp
- * @notice An empty proof must revert with a custom error rather than an arithmetic panic
- *         when the trailing hashCommitment is stripped.
+ * @notice Malformed proofs must be rejected before any verifier or DvP call: an empty proof with
+ *         a custom error rather than an arithmetic panic, and a wrong-sized one by the layout check.
  * @dev EnygmaV1 and the token registry are mocked only as far as the freeze check needs.
  */
 contract EnygmaDvpIntegrationDepositInputTest is Test {
@@ -38,6 +38,24 @@ contract EnygmaDvpIntegrationDepositInputTest is Test {
         proof.public_signal = new uint256[](0);
 
         vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__EmptyPublicSignals.selector);
+        integration.depositToDvp(proof, new bytes[](0), "");
+    }
+
+    /// @notice Deposit proofs are 8k + 3 signals; anything else matches no k once hashCommitment is stripped.
+    function test_depositToDvp_wrongPublicSignalLayout_reverts() public {
+        IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
+        proof.public_signal = new uint256[](8 * 2 + 12);
+
+        vm.expectRevert(bytes("Invalid transfer proof public_signal length"));
+        integration.depositToDvp(proof, new bytes[](0), "");
+    }
+
+    /// @notice A proof carrying only hashCommitment leaves no transfer signals.
+    function test_depositToDvp_onlyHashCommitmentSignal_reverts() public {
+        IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
+        proof.public_signal = new uint256[](1);
+
+        vm.expectRevert(bytes("Invalid transfer proof public_signal length"));
         integration.depositToDvp(proof, new bytes[](0), "");
     }
 }
