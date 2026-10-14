@@ -34,6 +34,7 @@ contract EnygmaDvpIntegration {
 
     error EnygmaDvpIntegration__OnlyFactoryAllowed();
     error EnygmaDvpIntegration__PaymentCommitmentMismatch();
+    error EnygmaDvpIntegration__EmptyPublicSignals();
 
     modifier onlyFactory() {
         if (msg.sender != factory) revert EnygmaDvpIntegration__OnlyFactoryAllowed();
@@ -99,6 +100,9 @@ contract EnygmaDvpIntegration {
         bytes[] memory encryptedMessages,
         bytes calldata encryptedBurnUpdate
     ) public checkFreeze nonReentrant returns (bool) {
+        // Reject before stripping hashCommitment so an empty proof doesn't panic on underflow
+        if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
+
         // Convert to transfer proof and extract all data in one place
         IEnygmaV1.TransferProof memory transferProof = convertDepositProofToTransferProof(proof);
         IEnygmaV1.ExtractedProofData memory proofData = _extractProofDataFromTransferProof(transferProof);
