@@ -23,7 +23,7 @@ import {ReentrancyGuard} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol
  * @title EnygmaDvpIntegration
  * @dev Extension contract for EnygmaV1 that adds DVP functionality
  */
-contract EnygmaDvpIntegration is ReentrancyGuard {
+contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     EnygmaV1 private _enygmaV1;
     address private _dvpAddress;
     address private _enygmaV1Address;
