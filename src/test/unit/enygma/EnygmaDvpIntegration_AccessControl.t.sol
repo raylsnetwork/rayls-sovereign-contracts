@@ -229,4 +229,26 @@ contract EnygmaDvpIntegrationAccessControlTest is Test {
         assertEq(integration.getDepositToDvpVerifierAddress(2), FAKE_VERIFIER);
         assertEq(integration.getWithdrawFromDvpVerifierAddress(2), FAKE_VERIFIER);
     }
+
+    // ============================================================
+    // ZERO-ADDRESS TESTS — misconfiguration must fail at registration
+    // ============================================================
+
+    function test_addDepositToDvpVerifier_zeroAddress_reverts() public {
+        vm.prank(factory);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);
+        integration.addDepositToDvpVerifier(address(0), 2);
+    }
+
+    function test_addWithdrawFromDvpVerifier_zeroAddress_reverts() public {
+        vm.prank(factory);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);
+        integration.addWithdrawFromDvpVerifier(address(0), 2);
+    }
+
+    function test_addDvp_zeroAddress_reverts() public {
+        vm.prank(factory);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);
+        integration.addDvp(address(0));
+    }
 }

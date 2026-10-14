@@ -38,6 +38,8 @@ contract EnygmaDvpIntegration {
     error EnygmaDvpIntegration__PaymentCommitmentMismatch();
     /// @dev The proof has no public signals, so there is no trailing commitment to strip.
     error EnygmaDvpIntegration__EmptyPublicSignals();
+    /// @dev A verifier or DvP address was set to zero, which would only surface later as a failed call.
+    error EnygmaDvpIntegration__ZeroAddress();
 
     modifier onlyFactory() {
         if (msg.sender != factory) revert EnygmaDvpIntegration__OnlyFactoryAllowed();
@@ -75,18 +77,21 @@ contract EnygmaDvpIntegration {
     }
 
     function addDepositToDvpVerifier(address depositToDvpVerifier, uint8 k) public onlyFactory returns (bool) {
+        if (depositToDvpVerifier == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         depositToDvpVerifiers[k] = depositToDvpVerifier;
         emit IEnygmaDvpIntegration.VerifierDepositToDvpRegistered(depositToDvpVerifier, k);
         return true;
     }
 
     function addWithdrawFromDvpVerifier(address withdrawFromDvpVerifier, uint8 k) public onlyFactory returns (bool) {
+        if (withdrawFromDvpVerifier == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         withdrawFromDvpVerifiers[k] = withdrawFromDvpVerifier;
         emit IEnygmaDvpIntegration.VerifierWithdrawFromDvpRegistered(withdrawFromDvpVerifier, k);
         return true;
     }
 
     function addDvp(address dvpAddress) public onlyFactory returns (bool) {
+        if (dvpAddress == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         _dvpAddress = dvpAddress;
         return true;
     }
@@ -140,8 +145,8 @@ contract EnygmaDvpIntegration {
      * @dev Invariants this function depends on:
      *      - The proof's last public signal (PaymentCommitment) must equal `transaction.commitments[0]`;
      *        this is what ties the credited amount to the burned DvP notes.
-     *      - A commitment of 0 is rejected. Commitments are Poseidon outputs, so a valid one is never
-     *        0; a circuit change that could yield 0 must revisit this guard.
+     *      - A commitment of 0 is rejected: it signals an uninitialised value or a bug. A Poseidon
+     *        output of 0 is possible only with negligible (~2^-254) probability.
      *      - `transaction` is NOT verified here. It is trusted only because `processWithdraw` ->
      *        `IDvp.withdrawEnygma` -> `EnygmaCoinVault.withdraw` verifies its join-split proof, roots
      *        and nullifiers, and the whole call reverts if that fails.
@@ -155,7 +160,7 @@ contract EnygmaDvpIntegration {
         if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
 
         // Bind the credit to the burned value: the proof's last signal (paymentCommitment) must
-        // equal the receipt's payment output. Zero is rejected even though Poseidon can't yield it.
+        // equal the receipt's payment output. Zero is rejected as an uninitialised value or a bug.
         // The receipt is only trusted because processWithdraw -> EnygmaCoinVault.withdraw
         // verifies its join-split proof, roots and nullifiers; this check relies on that.
         if (
