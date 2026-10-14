@@ -110,6 +110,21 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         );
     }
 
+    /// @notice An empty proof must revert with the binding error, not an index-underflow panic.
+    function test_SECURITY_withdrawFromDvp_emptyProofSignals_reverts() public {
+        IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
+        proof.public_signal = new uint256[](0);
+
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__PaymentCommitmentMismatch.selector);
+        integration.withdrawFromDvp(proof, new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), "");
+    }
+
+    /// @notice A zero payment commitment on both sides must not pass the binding.
+    function test_SECURITY_withdrawFromDvp_zeroPaymentCommitment_reverts() public {
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__PaymentCommitmentMismatch.selector);
+        integration.withdrawFromDvp(_withdrawProof(0), new bytes[](0), _receipt(_commitments(0, 7)), "");
+    }
+
     /// @notice The old 8k + 12 layout (10 trailing note hashes) is no longer a valid withdraw proof.
     function test_withdrawFromDvp_oldPublicSignalLayout_reverts() public {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;

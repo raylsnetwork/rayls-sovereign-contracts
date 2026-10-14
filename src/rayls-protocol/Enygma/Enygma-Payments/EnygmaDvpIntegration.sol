@@ -137,8 +137,14 @@ contract EnygmaDvpIntegration {
         // The withdraw proof opens its last public input (paymentCommitment) with the
         // credited amount; the join-split receipt's first output is the payment its burned
         // notes paid out. Requiring them to be equal ties the credit to the burned value.
+        // The length checks come first so malformed input reverts with the custom error
+        // rather than an index panic. A zero commitment is rejected explicitly: the circuit
+        // computes it as a Poseidon hash (so 0 is unreachable), but the binding must not
+        // rely on that property.
         if (
+            proof.public_signal.length == 0 ||
             transaction.commitments.length == 0 ||
+            transaction.commitments[0] == 0 ||
             transaction.commitments[0] != proof.public_signal[proof.public_signal.length - 1]
         ) {
             revert EnygmaDvpIntegration__PaymentCommitmentMismatch();
