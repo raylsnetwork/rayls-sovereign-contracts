@@ -46,7 +46,7 @@ contract EnygmaDvpIntegrationDepositInputTest is Test {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
         proof.public_signal = new uint256[](8 * 2 + 12);
 
-        vm.expectRevert(bytes("Invalid transfer proof public_signal length"));
+        vm.expectRevert(abi.encodeWithSelector(EnygmaDvpIntegration.EnygmaDvpIntegration__InvalidPublicSignalLength.selector, 8 * 2 + 11));
         integration.depositToDvp(proof, new bytes[](0), "");
     }
 
@@ -55,7 +55,7 @@ contract EnygmaDvpIntegrationDepositInputTest is Test {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
         proof.public_signal = new uint256[](1);
 
-        vm.expectRevert(bytes("Invalid transfer proof public_signal length"));
+        vm.expectRevert(abi.encodeWithSelector(EnygmaDvpIntegration.EnygmaDvpIntegration__InvalidPublicSignalLength.selector, 0));
         integration.depositToDvp(proof, new bytes[](0), "");
     }
 }

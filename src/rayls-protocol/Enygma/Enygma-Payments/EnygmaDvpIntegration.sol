@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.24;
 
 import '../../interfaces/IEnygmaV1.sol';
 import '../../interfaces/IDvp.sol';
@@ -41,6 +41,22 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
     error EnygmaDvpIntegration__EmptyPublicSignals();
     /// @dev A verifier or DvP address was set to zero, which would only surface later as a failed call.
     error EnygmaDvpIntegration__ZeroAddress();
+    /// @dev The Enygma token is frozen for this participant.
+    error EnygmaDvpIntegration__TokenFrozen();
+    error EnygmaDvpIntegration__VaultIdAlreadySet();
+    error EnygmaDvpIntegration__InvalidVaultId();
+    error EnygmaDvpIntegration__VaultIdNotInitialized();
+    error EnygmaDvpIntegration__DvpNotSet();
+    /// @dev No verifier is registered for this k.
+    error EnygmaDvpIntegration__VerifierNotSet(uint8 k);
+    /// @dev The Groth16 verifier rejected the proof.
+    error EnygmaDvpIntegration__InvalidProof();
+    /// @dev k is outside the supported range (2-6).
+    error EnygmaDvpIntegration__UnsupportedK(uint8 k);
+    /// @dev The public signal count matches no supported k.
+    error EnygmaDvpIntegration__InvalidPublicSignalLength(uint256 length);
+    /// @dev The DvP contract returned false.
+    error EnygmaDvpIntegration__DvpCallFailed();
 
     modifier onlyFactory() {
         if (msg.sender != factory) revert EnygmaDvpIntegration__OnlyFactoryAllowed();
@@ -64,7 +80,7 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
         bytes32 resourceId = _enygmaV1.resourceId();
         uint256 currentChainId = _enygmaV1.ownerChainId();
         bool isFrozen = tokenRegistry.isTokenFrozenForParticipant(resourceId, currentChainId);
-        require(!isFrozen, 'Token is in freeze status for this participant');
+        if (isFrozen) revert EnygmaDvpIntegration__TokenFrozen();
         _;
     }
 
@@ -89,8 +105,8 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
     }
 
     function setVaultId(uint256 vaultId) public onlyFactory returns (bool) {
-        require(_vaultId == 0, 'VaultId already set');
-        require(vaultId != 0, 'Invalid vaultId');
+        if (_vaultId != 0) revert EnygmaDvpIntegration__VaultIdAlreadySet();
+        if (vaultId == 0) revert EnygmaDvpIntegration__InvalidVaultId();
         _vaultId = vaultId;
         return true;
     }
@@ -109,7 +125,7 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
 
         // Validate inputs and verify deposit proof
         _enygmaV1.dvpValidateTransferInputs(transferProof);
-        require(depositToDvpVerifiers[proofData.k] != address(0), 'Deposit verifier not set for given k');
+        if (depositToDvpVerifiers[proofData.k] == address(0)) revert EnygmaDvpIntegration__VerifierNotSet(proofData.k);
         verifyDepositProof(proofData.k, proof);
 
         // Finalize pending transactions
@@ -117,7 +133,7 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
 
         // Process deposit - hashCommitment is the extra element at the end of deposit proof
         uint256 hashCommitment = uint256(proof.public_signal[proof.public_signal.length - 1]);
-        require(processDeposit(hashCommitment), 'DVP deposit processing failed');
+        if (!processDeposit(hashCommitment)) revert EnygmaDvpIntegration__DvpCallFailed();
 
         // Add the current transaction to pending balances
         _enygmaV1.dvpAddPendingTransaction(transferProof, IEnygmaV1.TxType.Deposit);
@@ -169,14 +185,14 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
 
         // Validate inputs and verify withdraw proof
         _enygmaV1.dvpValidateTransferInputs(transferProof);
-        require(withdrawFromDvpVerifiers[proofData.k] != address(0), 'Withdraw verifier not set for given k');
+        if (withdrawFromDvpVerifiers[proofData.k] == address(0)) revert EnygmaDvpIntegration__VerifierNotSet(proofData.k);
         verifyWithdrawProof(proofData.k, proof);
 
         // Finalize pending transactions
         _enygmaV1.dvpFinalisePendingTransactions(proofData.blockNumber);
 
         // Process withdrawal
-        require(processWithdraw(transaction), 'DVP withdrawal processing failed');
+        if (!processWithdraw(transaction)) revert EnygmaDvpIntegration__DvpCallFailed();
 
         // Add the current transaction to pending balances
         _enygmaV1.dvpAddPendingTransaction(transferProof, IEnygmaV1.TxType.Withdraw);
@@ -200,8 +216,8 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
      * @param transaction The join-split receipt to apply.
      */
     function consolidateFunds(IDvp.ProofReceipt memory transaction) public nonReentrant returns (bool) {
-        require(_vaultId != 0, 'VaultId not initialized');
-        require(_dvpAddress != address(0), 'Dvp address not set');
+        if (_vaultId == 0) revert EnygmaDvpIntegration__VaultIdNotInitialized();
+        if (_dvpAddress == address(0)) revert EnygmaDvpIntegration__DvpNotSet();
 
         IDvp dvp = IDvp(_dvpAddress);
         bool successDvpCall = dvp.mixFunds(_vaultId, transaction);
@@ -283,38 +299,33 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
         if (length == 34) return 4;
         if (length == 42) return 5;
         if (length == 50) return 6;
-        revert('Invalid transfer proof public_signal length');
+        revert EnygmaDvpIntegration__InvalidPublicSignalLength(length);
     }
 
     function verifyDepositProof(uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view returns (bool) {
         // DepositToDvp sizes: 8*k + 3 = k2:19, k3:27, k4:35, k5:43, k6:51
         if (k == 2) {
-            require(
-                IEnygmaDepositToDvpVerifierk2(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array19(proof.public_signal)),
-                'verifyProof returned false: Invalid deposit proof'
-            );
+            if (!IEnygmaDepositToDvpVerifierk2(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array19(proof.public_signal))) {
+                revert EnygmaDvpIntegration__InvalidProof();
+            }
         } else if (k == 3) {
-            require(
-                IEnygmaDepositToDvpVerifierk3(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array27(proof.public_signal)),
-                'verifyProof returned false: Invalid deposit proof'
-            );
+            if (!IEnygmaDepositToDvpVerifierk3(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array27(proof.public_signal))) {
+                revert EnygmaDvpIntegration__InvalidProof();
+            }
         } else if (k == 4) {
-            require(
-                IEnygmaDepositToDvpVerifierk4(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array35(proof.public_signal)),
-                'verifyProof returned false: Invalid deposit proof'
-            );
+            if (!IEnygmaDepositToDvpVerifierk4(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array35(proof.public_signal))) {
+                revert EnygmaDvpIntegration__InvalidProof();
+            }
         } else if (k == 5) {
-            require(
-                IEnygmaDepositToDvpVerifierk5(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array43(proof.public_signal)),
-                'verifyProof returned false: Invalid deposit proof'
-            );
+            if (!IEnygmaDepositToDvpVerifierk5(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array43(proof.public_signal))) {
+                revert EnygmaDvpIntegration__InvalidProof();
+            }
         } else if (k == 6) {
-            require(
-                IEnygmaDepositToDvpVerifierk6(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array51(proof.public_signal)),
-                'verifyProof returned false: Invalid deposit proof'
-            );
+            if (!IEnygmaDepositToDvpVerifierk6(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array51(proof.public_signal))) {
+                revert EnygmaDvpIntegration__InvalidProof();
+            }
         } else {
-            revert('That value of k is not supported');
+            revert EnygmaDvpIntegration__UnsupportedK(k);
         }
         return true;
     }
@@ -322,39 +333,34 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
     function verifyWithdrawProof(uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view returns (bool) {
         // WithdrawFromDvp sizes: 8*k + 3 = k2:19, k3:27, k4:35, k5:43, k6:51 (same as DepositToDvp)
         if (k == 2) {
-            require(
-                IEnygmaWithdrawFromDvpVerifierk2(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array19(proof.public_signal)),
-                'verifyProof returned false: Invalid withdraw proof'
-            );
+            if (!IEnygmaWithdrawFromDvpVerifierk2(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array19(proof.public_signal))) {
+                revert EnygmaDvpIntegration__InvalidProof();
+            }
         } else if (k == 3) {
-            require(
-                IEnygmaWithdrawFromDvpVerifierk3(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array27(proof.public_signal)),
-                'verifyProof returned false: Invalid withdraw proof'
-            );
+            if (!IEnygmaWithdrawFromDvpVerifierk3(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array27(proof.public_signal))) {
+                revert EnygmaDvpIntegration__InvalidProof();
+            }
         } else if (k == 4) {
-            require(
-                IEnygmaWithdrawFromDvpVerifierk4(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array35(proof.public_signal)),
-                'verifyProof returned false: Invalid withdraw proof'
-            );
+            if (!IEnygmaWithdrawFromDvpVerifierk4(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array35(proof.public_signal))) {
+                revert EnygmaDvpIntegration__InvalidProof();
+            }
         } else if (k == 5) {
-            require(
-                IEnygmaWithdrawFromDvpVerifierk5(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array43(proof.public_signal)),
-                'verifyProof returned false: Invalid withdraw proof'
-            );
+            if (!IEnygmaWithdrawFromDvpVerifierk5(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array43(proof.public_signal))) {
+                revert EnygmaDvpIntegration__InvalidProof();
+            }
         } else if (k == 6) {
-            require(
-                IEnygmaWithdrawFromDvpVerifierk6(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array51(proof.public_signal)),
-                'verifyProof returned false: Invalid withdraw proof'
-            );
+            if (!IEnygmaWithdrawFromDvpVerifierk6(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array51(proof.public_signal))) {
+                revert EnygmaDvpIntegration__InvalidProof();
+            }
         } else {
-            revert('That value of k is not supported');
+            revert EnygmaDvpIntegration__UnsupportedK(k);
         }
         return true;
     }
 
     function processDeposit(uint256 hashCommitment) internal returns (bool) {
-        require(_vaultId != 0, 'VaultId not initialized');
-        require(_dvpAddress != address(0), 'Dvp address not set');
+        if (_vaultId == 0) revert EnygmaDvpIntegration__VaultIdNotInitialized();
+        if (_dvpAddress == address(0)) revert EnygmaDvpIntegration__DvpNotSet();
 
         IDvp dvp = IDvp(_dvpAddress);
         bool success = dvp.depositEnygma(_vaultId, hashCommitment);
@@ -362,8 +368,8 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
     }
 
     function processWithdraw(IDvp.ProofReceipt memory transaction) internal returns (bool) {
-        require(_vaultId != 0, 'VaultId not initialized');
-        require(_dvpAddress != address(0), 'Dvp address not set');
+        if (_vaultId == 0) revert EnygmaDvpIntegration__VaultIdNotInitialized();
+        if (_dvpAddress == address(0)) revert EnygmaDvpIntegration__DvpNotSet();
 
         IDvp dvp = IDvp(_dvpAddress);
         bool successDvpCall = dvp.withdrawEnygma(_vaultId, transaction);
@@ -405,7 +411,7 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
     // Deposit and withdraw verifier array conversions: 8*k + 3
     // k=2: 19, k=3: 27, k=4: 35, k=5: 43, k=6: 51
     function convertToUint256Array19(uint256[] memory dynamicArray) internal pure returns (uint256[19] memory fixedArray) {
-        require(dynamicArray.length == 19, 'Input array must have exactly 19 elements');
+        if (dynamicArray.length != 19) revert EnygmaDvpIntegration__InvalidPublicSignalLength(dynamicArray.length);
         for (uint256 i = 0; i < 19; i++) {
             fixedArray[i] = dynamicArray[i];
         }
@@ -413,7 +419,7 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
     }
 
     function convertToUint256Array27(uint256[] memory dynamicArray) internal pure returns (uint256[27] memory fixedArray) {
-        require(dynamicArray.length == 27, 'Input array must have exactly 27 elements');
+        if (dynamicArray.length != 27) revert EnygmaDvpIntegration__InvalidPublicSignalLength(dynamicArray.length);
         for (uint256 i = 0; i < 27; i++) {
             fixedArray[i] = dynamicArray[i];
         }
@@ -421,7 +427,7 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
     }
 
     function convertToUint256Array35(uint256[] memory dynamicArray) internal pure returns (uint256[35] memory fixedArray) {
-        require(dynamicArray.length == 35, 'Input array must have exactly 35 elements');
+        if (dynamicArray.length != 35) revert EnygmaDvpIntegration__InvalidPublicSignalLength(dynamicArray.length);
         for (uint256 i = 0; i < 35; i++) {
             fixedArray[i] = dynamicArray[i];
         }
@@ -429,7 +435,7 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
     }
 
     function convertToUint256Array43(uint256[] memory dynamicArray) internal pure returns (uint256[43] memory fixedArray) {
-        require(dynamicArray.length == 43, 'Input array must have exactly 43 elements');
+        if (dynamicArray.length != 43) revert EnygmaDvpIntegration__InvalidPublicSignalLength(dynamicArray.length);
         for (uint256 i = 0; i < 43; i++) {
             fixedArray[i] = dynamicArray[i];
         }
@@ -437,7 +443,7 @@ contract EnygmaDvpIntegration is ReentrancyGuard {
     }
 
     function convertToUint256Array51(uint256[] memory dynamicArray) internal pure returns (uint256[51] memory fixedArray) {
-        require(dynamicArray.length == 51, 'Input array must have exactly 51 elements');
+        if (dynamicArray.length != 51) revert EnygmaDvpIntegration__InvalidPublicSignalLength(dynamicArray.length);
         for (uint256 i = 0; i < 51; i++) {
             fixedArray[i] = dynamicArray[i];
         }

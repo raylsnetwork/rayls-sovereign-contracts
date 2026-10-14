@@ -126,7 +126,7 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         proof.public_signal = new uint256[](1);
         proof.public_signal[0] = PAYMENT_COMMITMENT;
 
-        vm.expectRevert(bytes("Invalid transfer proof public_signal length"));
+        vm.expectRevert(abi.encodeWithSelector(EnygmaDvpIntegration.EnygmaDvpIntegration__InvalidPublicSignalLength.selector, 0));
         integration.withdrawFromDvp(proof, new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), "");
     }
 
@@ -159,6 +159,26 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         );
     }
 
+    /// @notice A proof the verifier rejects reverts with InvalidProof, after the binding passes.
+    function test_withdrawFromDvp_verifierRejects_reverts() public {
+        vm.mockCall(verifier, abi.encodeWithSelector(IEnygmaWithdrawFromDvpVerifierk2.verifyProof.selector), abi.encode(false));
+
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__InvalidProof.selector);
+        integration.withdrawFromDvp(
+            _withdrawProof(PAYMENT_COMMITMENT), new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), ""
+        );
+    }
+
+    /// @notice A well-formed proof for a k with no registered verifier reverts with VerifierNotSet(k).
+    function test_withdrawFromDvp_verifierNotSet_reverts() public {
+        IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof;
+        proof.public_signal = new uint256[](8 * 3 + 3);
+        proof.public_signal[8 * 3 + 2] = PAYMENT_COMMITMENT;
+
+        vm.expectRevert(abi.encodeWithSelector(EnygmaDvpIntegration.EnygmaDvpIntegration__VerifierNotSet.selector, uint8(3)));
+        integration.withdrawFromDvp(proof, new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), "");
+    }
+
     /// @notice The old 8k + 12 layout (10 trailing note hashes) is no longer a valid withdraw proof.
     /// @dev The last signal matches the receipt, so the binding passes; the rejection must come
     ///      from the layout itself (8k + 11 transfer signals match no supported k).
@@ -167,7 +187,7 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         proof.public_signal = new uint256[](8 * K + 12);
         proof.public_signal[8 * K + 11] = PAYMENT_COMMITMENT;
 
-        vm.expectRevert(bytes("Invalid transfer proof public_signal length"));
+        vm.expectRevert(abi.encodeWithSelector(EnygmaDvpIntegration.EnygmaDvpIntegration__InvalidPublicSignalLength.selector, 8 * K + 11));
         integration.withdrawFromDvp(proof, new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), "");
     }
 }
