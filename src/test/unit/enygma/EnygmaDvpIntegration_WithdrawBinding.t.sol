@@ -182,6 +182,17 @@ contract EnygmaDvpIntegrationWithdrawBindingTest is Test {
         );
     }
 
+    /// @notice An integration without a vault id fails before the (expensive) proof verification.
+    function test_withdrawFromDvp_unconfigured_revertsBeforeVerifier() public {
+        EnygmaDvpIntegration fresh = new EnygmaDvpIntegration(enygmaV1, factory);
+
+        vm.expectCall(verifier, abi.encodeWithSelector(IEnygmaWithdrawFromDvpVerifierk2.verifyProof.selector), 0);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__VaultIdNotInitialized.selector);
+        fresh.withdrawFromDvp(
+            _withdrawProof(PAYMENT_COMMITMENT), new bytes[](0), _receipt(_commitments(PAYMENT_COMMITMENT, 7)), ""
+        );
+    }
+
     /// @notice A proof the verifier rejects reverts with InvalidProof, after the binding passes.
     function test_withdrawFromDvp_verifierRejects_reverts() public {
         vm.mockCall(verifier, abi.encodeWithSelector(IEnygmaWithdrawFromDvpVerifierk2.verifyProof.selector), abi.encode(false));
