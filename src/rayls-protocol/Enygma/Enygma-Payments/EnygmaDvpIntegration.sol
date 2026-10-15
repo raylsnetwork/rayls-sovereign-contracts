@@ -1,13 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.24;
 
 import '../../interfaces/IEnygmaV1.sol';
 import '../../interfaces/IDvp.sol';
-import '../../interfaces/IEnygmaWithdrawFromDvpVerifierk2.sol';
-import '../../interfaces/IEnygmaWithdrawFromDvpVerifierk3.sol';
-import '../../interfaces/IEnygmaWithdrawFromDvpVerifierk4.sol';
-import '../../interfaces/IEnygmaWithdrawFromDvpVerifierk5.sol';
-import '../../interfaces/IEnygmaWithdrawFromDvpVerifierk6.sol';
 import '../../interfaces/IEnygmaDepositToDvpVerifierk2.sol';
 import '../../interfaces/IEnygmaDepositToDvpVerifierk3.sol';
 import '../../interfaces/IEnygmaDepositToDvpVerifierk4.sol';
@@ -17,22 +12,56 @@ import '../../interfaces/IEnygmaDvpIntegration.sol';
 import '../../../privateHub/TokenRegistry/TokenRegistryV1.sol';
 import '../../../rayls-protocol-sdk/interfaces/IRaylsEndpoint.sol';
 import './EnygmaV1.sol';
+import {ReentrancyGuard} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 /**
  * @title EnygmaDvpIntegration
  * @dev Extension contract for EnygmaV1 that adds DVP functionality
  */
-contract EnygmaDvpIntegration {
+contract EnygmaDvpIntegration is IEnygmaDvpIntegration, ReentrancyGuard {
     EnygmaV1 private _enygmaV1;
     address private _dvpAddress;
-    address private _enygmaV1Address;
     uint256 private _vaultId;
     address public immutable factory;
 
-    mapping(uint256 => address) public depositToDvpVerifiers;
-    mapping(uint256 => address) public withdrawFromDvpVerifiers;
+    mapping(uint8 => address) public depositToDvpVerifiers;
+    mapping(uint8 => address) public withdrawFromDvpVerifiers;
 
     error EnygmaDvpIntegration__OnlyFactoryAllowed();
+    /// @dev The withdraw proof's PaymentCommitment does not equal the receipt's commitments[0].
+    error EnygmaDvpIntegration__PaymentCommitmentMismatch();
+    /// @dev The receipt has no output commitments, so there is no payment output to bind to.
+    error EnygmaDvpIntegration__EmptyReceiptCommitments();
+    /// @dev The proof has no public signals, so there is no trailing commitment to strip.
+    error EnygmaDvpIntegration__EmptyPublicSignals();
+    /// @dev The receipt's payment commitment is 0: an uninitialised value or a bug, never a real payment.
+    error EnygmaDvpIntegration__ZeroPaymentCommitment();
+    /// @dev The deposit's hashCommitment is 0, which would insert a trivially known note into the vault.
+    error EnygmaDvpIntegration__ZeroHashCommitment();
+    /// @dev A verifier or DvP address was set to zero, which would only surface later as a failed call.
+    error EnygmaDvpIntegration__ZeroAddress();
+    /// @dev The Enygma token is frozen for this participant.
+    error EnygmaDvpIntegration__TokenFrozen();
+    error EnygmaDvpIntegration__VaultIdAlreadySet();
+    error EnygmaDvpIntegration__InvalidVaultId();
+    error EnygmaDvpIntegration__VaultIdNotInitialized();
+    error EnygmaDvpIntegration__DvpNotSet();
+    /// @dev No verifier is registered for this k.
+    error EnygmaDvpIntegration__VerifierNotSet(uint8 k);
+    /// @dev The Groth16 verifier rejected the proof.
+    error EnygmaDvpIntegration__InvalidProof();
+    /// @dev k is outside the supported range (2-6).
+    error EnygmaDvpIntegration__UnsupportedK(uint8 k);
+    /// @dev The public signal count matches no supported k.
+    error EnygmaDvpIntegration__InvalidPublicSignalLength(uint256 length);
+    /// @dev The DvP contract returned false.
+    error EnygmaDvpIntegration__DvpCallFailed();
+
+    /// @dev Vault id and DvP address, read from storage once per call (one stack slot as a memory struct).
+    struct DvpConfig {
+        uint256 vaultId;
+        address dvpAddress;
+    }
 
     modifier onlyFactory() {
         if (msg.sender != factory) revert EnygmaDvpIntegration__OnlyFactoryAllowed();
@@ -45,12 +74,10 @@ contract EnygmaDvpIntegration {
      * @param _factory The address of the factory contract authorized to configure this integration
      */
     constructor(address enygmaV1Address, address _factory) {
-        _enygmaV1Address = enygmaV1Address;
+        if (enygmaV1Address == address(0) || _factory == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         _enygmaV1 = EnygmaV1(enygmaV1Address);
         factory = _factory;
     }
-
-    bool private _processing;
 
     modifier checkFreeze() {
         address tokenRegistryContract = _enygmaV1.tokenRegistryContract();
@@ -58,38 +85,44 @@ contract EnygmaDvpIntegration {
         bytes32 resourceId = _enygmaV1.resourceId();
         uint256 currentChainId = _enygmaV1.ownerChainId();
         bool isFrozen = tokenRegistry.isTokenFrozenForParticipant(resourceId, currentChainId);
-        require(!isFrozen, 'Token is in freeze status for this participant');
+        if (isFrozen) revert EnygmaDvpIntegration__TokenFrozen();
         _;
     }
 
-    modifier nonReentrant() {
-        require(!_processing, "ReentrancyGuard: reentrant call");
-        _processing = true;
-        _;
-        _processing = false;
-    }
-
-    function addDepositToDvpVerifier(address depositToDvpVerifier, uint8 k) public onlyFactory returns (bool) {
+    /// @dev Overwrites any verifier already set for `k`, unlike the set-once `setVaultId`: the factory
+    ///      re-registers verifiers when a trusted-setup ceremony rotates the keys.
+    function addDepositToDvpVerifier(address depositToDvpVerifier, uint8 k) external onlyFactory returns (bool) {
+        if (depositToDvpVerifier == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
+        _requireSupportedK(k);
         depositToDvpVerifiers[k] = depositToDvpVerifier;
         emit IEnygmaDvpIntegration.VerifierDepositToDvpRegistered(depositToDvpVerifier, k);
         return true;
     }
 
-    function addWithdrawFromDvpVerifier(address withdrawFromDvpVerifier, uint8 k) public onlyFactory returns (bool) {
+    /// @dev Overwrites any verifier already set for `k`; see addDepositToDvpVerifier.
+    function addWithdrawFromDvpVerifier(address withdrawFromDvpVerifier, uint8 k) external onlyFactory returns (bool) {
+        if (withdrawFromDvpVerifier == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
+        _requireSupportedK(k);
         withdrawFromDvpVerifiers[k] = withdrawFromDvpVerifier;
         emit IEnygmaDvpIntegration.VerifierWithdrawFromDvpRegistered(withdrawFromDvpVerifier, k);
         return true;
     }
 
-    function addDvp(address dvpAddress) public onlyFactory returns (bool) {
+    /// @dev Overwrites any DvP address already set; DvpRegistered logs only the new one, so the previous
+    ///      address comes from the earlier event. `_vaultId` is set-once: a replacement DvP must use the
+    ///      same vault id, otherwise this integration has to be redeployed.
+    function addDvp(address dvpAddress) external onlyFactory returns (bool) {
+        if (dvpAddress == address(0)) revert EnygmaDvpIntegration__ZeroAddress();
         _dvpAddress = dvpAddress;
+        emit IEnygmaDvpIntegration.DvpRegistered(dvpAddress);
         return true;
     }
 
-    function setVaultId(uint256 vaultId) public onlyFactory returns (bool) {
-        require(_vaultId == 0, 'VaultId already set');
-        require(vaultId != 0, 'Invalid vaultId');
+    function setVaultId(uint256 vaultId) external onlyFactory returns (bool) {
+        if (_vaultId != 0) revert EnygmaDvpIntegration__VaultIdAlreadySet();
+        if (vaultId == 0) revert EnygmaDvpIntegration__InvalidVaultId();
         _vaultId = vaultId;
+        emit IEnygmaDvpIntegration.VaultIdSet(vaultId);
         return true;
     }
 
@@ -97,22 +130,24 @@ contract EnygmaDvpIntegration {
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof,
         bytes[] memory encryptedMessages,
         bytes calldata encryptedBurnUpdate
-    ) public checkFreeze nonReentrant returns (bool) {
-        // Convert to transfer proof and extract all data in one place
-        IEnygmaV1.TransferProof memory transferProof = convertDepositProofToTransferProof(proof);
-        IEnygmaV1.ExtractedProofData memory proofData = _extractProofDataFromTransferProof(transferProof);
+    ) external nonReentrant checkFreeze returns (bool) {
+        // Reject before stripping hashCommitment so an empty proof doesn't panic on underflow
+        if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
+        // hashCommitment is the extra element at the end of the deposit proof
+        uint256 hashCommitment = proof.public_signal[proof.public_signal.length - 1];
+        if (hashCommitment == 0) revert EnygmaDvpIntegration__ZeroHashCommitment();
+        // Read once, before proof verification, so an unconfigured integration fails cheaply
+        DvpConfig memory config = _dvpConfig();
 
-        // Validate inputs and verify deposit proof
-        _enygmaV1.dvpValidateTransferInputs(transferProof);
-        require(depositToDvpVerifiers[proofData.k] != address(0), 'Deposit verifier not set for given k');
-        verifyDepositProof(proofData.k, proof);
+        // Strip the trailing signal, validate the transfer inputs and verify the deposit proof
+        (IEnygmaV1.TransferProof memory transferProof, IEnygmaV1.ExtractedProofData memory proofData) =
+            _prepareAndVerify(proof, depositToDvpVerifiers);
 
         // Finalize pending transactions
         _enygmaV1.dvpFinalisePendingTransactions(proofData.blockNumber);
 
-        // Process deposit - hashCommitment is the extra element at the end of deposit proof
-        uint256 hashCommitment = uint256(proof.public_signal[proof.public_signal.length - 1]);
-        require(processDeposit(hashCommitment), 'DVP deposit processing failed');
+        // Process deposit
+        if (!IDvp(config.dvpAddress).depositEnygma(config.vaultId, hashCommitment)) revert EnygmaDvpIntegration__DvpCallFailed();
 
         // Add the current transaction to pending balances
         _enygmaV1.dvpAddPendingTransaction(transferProof, IEnygmaV1.TxType.Deposit);
@@ -123,30 +158,47 @@ contract EnygmaDvpIntegration {
         // Update lastblockNumPending
         _enygmaV1.dvpSetLastblockNumPending(proofData.blockNumber);
 
-        emit IEnygmaDvpIntegration.DepositToDvpSuccesful(hashCommitment, msg.sender);
+        emit IEnygmaDvpIntegration.DepositToDvpSuccessful(hashCommitment, address(_enygmaV1));
         return true;
     }
 
+    /**
+     * @notice Credits Enygma with the value paid out of a DvP join-split.
+     * @dev Invariants this function depends on:
+     *      - The proof's last public signal (PaymentCommitment) must equal `transaction.commitments[0]`;
+     *        this is what ties the credited amount to the burned DvP notes.
+     *      - A commitment of 0 is rejected: it signals an uninitialised value or a bug. A Poseidon
+     *        output of 0 is possible only with negligible (~2^-254) probability.
+     *      - `transaction` is NOT verified here. It is trusted only because `processWithdraw` ->
+     *        `IDvp.withdrawEnygma` -> `EnygmaCoinVault.withdraw` verifies its join-split proof, roots
+     *        and nullifiers, and the whole call reverts if that fails. This is only as strong as the
+     *        contract at `_dvpAddress`, which only the factory can set (`addDvp`).
+     * @custom:security-invariant _checkPaymentBinding, _verifyZkProof and processWithdraw must all run in
+     *        this one call. The binding alone proves nothing; moving either authentication step to
+     *        another entry point reopens the inflated-credit exploit.
+     */
     function withdrawFromDvp(
         IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof,
         bytes[] memory encryptedMessages,
         IDvp.ProofReceipt memory transaction,
         bytes calldata encryptedMintUpdate
-    ) public checkFreeze nonReentrant returns (bool) {
-        // Convert to transfer proof and extract all data in one place
-        IEnygmaV1.TransferProof memory transferProof = convertWithdrawProofToTransferProof(proof);
-        IEnygmaV1.ExtractedProofData memory proofData = _extractProofDataFromTransferProof(transferProof);
+    ) external nonReentrant checkFreeze returns (bool) {
+        if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
 
-        // Validate inputs and verify withdraw proof
-        _enygmaV1.dvpValidateTransferInputs(transferProof);
-        require(withdrawFromDvpVerifiers[proofData.k] != address(0), 'Withdraw verifier not set for given k');
-        verifyWithdrawProof(proofData.k, proof);
+        // Fail-fast binding check; see _checkPaymentBinding for why the calls below must stay here.
+        _checkPaymentBinding(proof, transaction);
+        // Read once, before proof verification, so an unconfigured integration fails cheaply
+        DvpConfig memory config = _dvpConfig();
+
+        // Strip the trailing signal, validate the transfer inputs and verify the withdraw proof
+        (IEnygmaV1.TransferProof memory transferProof, IEnygmaV1.ExtractedProofData memory proofData) =
+            _prepareAndVerify(proof, withdrawFromDvpVerifiers);
 
         // Finalize pending transactions
         _enygmaV1.dvpFinalisePendingTransactions(proofData.blockNumber);
 
         // Process withdrawal
-        require(processWithdraw(transaction), 'DVP withdrawal processing failed');
+        if (!processWithdraw(config, transaction)) revert EnygmaDvpIntegration__DvpCallFailed();
 
         // Add the current transaction to pending balances
         _enygmaV1.dvpAddPendingTransaction(transferProof, IEnygmaV1.TxType.Withdraw);
@@ -157,17 +209,25 @@ contract EnygmaDvpIntegration {
         // Update lastblockNumPending
         _enygmaV1.dvpSetLastblockNumPending(proofData.blockNumber);
 
-        emit IEnygmaDvpIntegration.WithdrawFromDvpSuccesful(transaction, msg.sender);
+        emit IEnygmaDvpIntegration.WithdrawFromDvpSuccessful(transaction, address(_enygmaV1));
         return true;
     }
 
-    function consolidateFunds(IDvp.ProofReceipt memory transaction) public returns (bool) {
-        require(_vaultId != 0, 'VaultId not initialized');
-        require(_dvpAddress != address(0), 'Dvp address not set');
-
-        IDvp dvp = IDvp(_dvpAddress);
-        bool successDvpCall = dvp.mixFunds(_vaultId, transaction);
-        return successDvpCall;
+    /**
+     * @notice Merges DvP vault notes into new outputs via a join-split receipt.
+     * @dev Permissionless by design: anyone may relay a valid receipt. Authorisation comes from the
+     *      receipt itself, which `Dvp.mixFunds` -> `EnygmaCoinVault.transfer` verifies (join-split
+     *      proof, roots, nullifiers) before spending any note. `Dvp.mixFunds` is `restricted`, so this
+     *      contract is the only Enygma entry point to it; that gate is not a caller check.
+     *      The freeze check applies: a join-split can pay notes to other keys, so consolidation could
+     *      otherwise move value while the token is frozen for this participant.
+     * @param transaction The join-split receipt to apply.
+     */
+    function consolidateFunds(IDvp.ProofReceipt memory transaction) external nonReentrant checkFreeze returns (bool) {
+        DvpConfig memory config = _dvpConfig();
+        if (!IDvp(config.dvpAddress).mixFunds(config.vaultId, transaction)) revert EnygmaDvpIntegration__DvpCallFailed();
+        emit IEnygmaDvpIntegration.ConsolidateFundsSuccessful(transaction, address(_enygmaV1));
+        return true;
     }
 
     // Extract proof data from transfer proof (mirrors EnygmaV1.extractProofData)
@@ -245,129 +305,113 @@ contract EnygmaDvpIntegration {
         if (length == 34) return 4;
         if (length == 42) return 5;
         if (length == 50) return 6;
-        revert('Invalid transfer proof public_signal length');
+        revert EnygmaDvpIntegration__InvalidPublicSignalLength(length);
     }
 
-    function verifyDepositProof(uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view returns (bool) {
-        // DepositToDvp sizes: 8*k + 3 = k2:19, k3:27, k4:35, k5:43, k6:51
-        if (k == 2) {
-            require(
-                IEnygmaDepositToDvpVerifierk2(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array19(proof.public_signal)),
-                'verifyProof returned false: Invalid deposit proof'
-            );
-        } else if (k == 3) {
-            require(
-                IEnygmaDepositToDvpVerifierk3(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array27(proof.public_signal)),
-                'verifyProof returned false: Invalid deposit proof'
-            );
-        } else if (k == 4) {
-            require(
-                IEnygmaDepositToDvpVerifierk4(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array35(proof.public_signal)),
-                'verifyProof returned false: Invalid deposit proof'
-            );
-        } else if (k == 5) {
-            require(
-                IEnygmaDepositToDvpVerifierk5(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array43(proof.public_signal)),
-                'verifyProof returned false: Invalid deposit proof'
-            );
-        } else if (k == 6) {
-            require(
-                IEnygmaDepositToDvpVerifierk6(depositToDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array51(proof.public_signal)),
-                'verifyProof returned false: Invalid deposit proof'
-            );
-        } else {
-            revert('That value of k is not supported');
+    /**
+     * @dev Binds the credit to the burned value: the proof's last signal (paymentCommitment) must equal
+     *      the receipt's payment output. This is a fail-fast check, not a complete one: it is sound only
+     *      because withdrawFromDvp then runs _verifyZkProof (authenticates the signal) and
+     *      processWithdraw (authenticates the receipt). Both must stay in withdrawFromDvp; moving either
+     *      to a separate call path would decouple the binding and reopen the inflated-credit exploit.
+     */
+    function _checkPaymentBinding(
+        IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof,
+        IDvp.ProofReceipt memory transaction
+    ) internal pure {
+        if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
+        if (transaction.commitments.length == 0) revert EnygmaDvpIntegration__EmptyReceiptCommitments();
+        uint256 receiptPayment = transaction.commitments[0];
+        // A zero proof signal could only pass by matching a zero receipt, which is rejected here first,
+        // so a zero signal always reverts (with PaymentCommitmentMismatch against a non-zero receipt).
+        if (receiptPayment == 0) revert EnygmaDvpIntegration__ZeroPaymentCommitment();
+        if (receiptPayment != proof.public_signal[proof.public_signal.length - 1]) {
+            revert EnygmaDvpIntegration__PaymentCommitmentMismatch();
         }
-        return true;
     }
 
-    function verifyWithdrawProof(uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view returns (bool) {
-        // WithdrawFromDvp sizes: 8*k + 12 = k2:28, k3:36, k4:44, k5:52, k6:60
+    /**
+     * @dev Shared front half of deposit and withdraw: strips the trailing signal into the 8k + 2
+     *      transfer layout, validates it with EnygmaV1 and verifies the full proof against the verifier
+     *      registered for its k in `verifiers`.
+     */
+    function _prepareAndVerify(
+        IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof,
+        mapping(uint8 => address) storage verifiers
+    ) internal returns (IEnygmaV1.TransferProof memory transferProof, IEnygmaV1.ExtractedProofData memory proofData) {
+        transferProof = _stripTrailingSignal(proof);
+        proofData = _extractProofDataFromTransferProof(transferProof);
+        // dvpValidateTransferInputs is a view check and far cheaper than the pairing, so it runs first.
+        _enygmaV1.dvpValidateTransferInputs(transferProof);
+        _verifyZkProof(verifiers[proofData.k], proofData.k, proof);
+    }
+
+    /**
+     * @dev Verifies a deposit or withdraw proof against `verifier`. Deposit and withdraw circuits share
+     *      the 8k + 3 public-signal layout and the same verifyProof ABI per k, so one dispatch table
+     *      serves both; the caller picks the verifier mapping. The IEnygmaDepositToDvpVerifierkN types are
+     *      used for both families; EnygmaDvpIntegration_VerifierAbi.t.sol fails if the deposit and
+     *      withdraw selectors ever diverge, at which point this must split per family.
+     */
+    function _verifyZkProof(address verifier, uint8 k, IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal view {
+        if (verifier == address(0)) revert EnygmaDvpIntegration__VerifierNotSet(k);
+        bool valid;
+        // 8*k + 3 = k2:19, k3:27, k4:35, k5:43, k6:51. Withdraw verifiers (and their proxies) expose the
+        // same verifyProof ABI, which is why IEnygmaWithdrawFromDvpVerifierkN isn't imported here.
         if (k == 2) {
-            require(
-                IEnygmaWithdrawFromDvpVerifierk2(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array28(proof.public_signal)),
-                'verifyProof returned false: Invalid withdraw proof'
-            );
+            valid = IEnygmaDepositToDvpVerifierk2(verifier).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array19(proof.public_signal));
         } else if (k == 3) {
-            require(
-                IEnygmaWithdrawFromDvpVerifierk3(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array36(proof.public_signal)),
-                'verifyProof returned false: Invalid withdraw proof'
-            );
+            valid = IEnygmaDepositToDvpVerifierk3(verifier).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array27(proof.public_signal));
         } else if (k == 4) {
-            require(
-                IEnygmaWithdrawFromDvpVerifierk4(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array44(proof.public_signal)),
-                'verifyProof returned false: Invalid withdraw proof'
-            );
+            valid = IEnygmaDepositToDvpVerifierk4(verifier).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array35(proof.public_signal));
         } else if (k == 5) {
-            require(
-                IEnygmaWithdrawFromDvpVerifierk5(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array52(proof.public_signal)),
-                'verifyProof returned false: Invalid withdraw proof'
-            );
+            valid = IEnygmaDepositToDvpVerifierk5(verifier).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array43(proof.public_signal));
         } else if (k == 6) {
-            require(
-                IEnygmaWithdrawFromDvpVerifierk6(withdrawFromDvpVerifiers[k]).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array60(proof.public_signal)),
-                'verifyProof returned false: Invalid withdraw proof'
-            );
+            valid = IEnygmaDepositToDvpVerifierk6(verifier).verifyProof(proof.pi_a, proof.pi_b, proof.pi_c, convertToUint256Array51(proof.public_signal));
         } else {
-            revert('That value of k is not supported');
+            revert EnygmaDvpIntegration__UnsupportedK(k);
         }
-        return true;
+        if (!valid) revert EnygmaDvpIntegration__InvalidProof();
     }
 
-    function processDeposit(uint256 hashCommitment) internal returns (bool) {
-        require(_vaultId != 0, 'VaultId not initialized');
-        require(_dvpAddress != address(0), 'Dvp address not set');
-
-        IDvp dvp = IDvp(_dvpAddress);
-        bool success = dvp.depositEnygma(_vaultId, hashCommitment);
-        return success;
+    function processWithdraw(DvpConfig memory config, IDvp.ProofReceipt memory transaction) private returns (bool) {
+        return IDvp(config.dvpAddress).withdrawEnygma(config.vaultId, transaction);
     }
 
-    function processWithdraw(IDvp.ProofReceipt memory transaction) internal returns (bool) {
-        require(_vaultId != 0, 'VaultId not initialized');
-        require(_dvpAddress != address(0), 'Dvp address not set');
-
-        IDvp dvp = IDvp(_dvpAddress);
-        bool successDvpCall = dvp.withdrawEnygma(_vaultId, transaction);
-        return successDvpCall;
+    /// @dev k must be one the verifier dispatch handles (2-6), so bad registrations fail at the setter.
+    function _requireSupportedK(uint8 k) internal pure {
+        if (k < 2 || k > 6) revert EnygmaDvpIntegration__UnsupportedK(k);
     }
 
-    function convertWithdrawProofToTransferProof(IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal pure returns (IEnygmaV1.TransferProof memory) {
-        IEnygmaV1.TransferProof memory transferProof;
+    /// @dev Reads the vault id and DvP address once, reverting if either is unset.
+    function _dvpConfig() internal view returns (DvpConfig memory config) {
+        config = DvpConfig({vaultId: _vaultId, dvpAddress: _dvpAddress});
+        if (config.vaultId == 0) revert EnygmaDvpIntegration__VaultIdNotInitialized();
+        if (config.dvpAddress == address(0)) revert EnygmaDvpIntegration__DvpNotSet();
+    }
+
+    /**
+     * @dev Drops the circuit-specific trailing signal (paymentCommitment for withdraw, hashCommitment
+     *      for deposit) to get the 8k + 2 transfer layout EnygmaV1 expects. Callers check emptiness too;
+     *      repeated here so the helper is safe on its own.
+     */
+    function _stripTrailingSignal(IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal pure returns (IEnygmaV1.TransferProof memory transferProof) {
+        if (proof.public_signal.length == 0) revert EnygmaDvpIntegration__EmptyPublicSignals();
         transferProof.pi_a = proof.pi_a;
         transferProof.pi_b = proof.pi_b;
         transferProof.pi_c = proof.pi_c;
 
-        // Create a new array without last 10 items (dvp commitment hashes)
-        uint256[] memory adjustedPublicSignal = new uint256[](proof.public_signal.length - 10);
-        for (uint256 i = 0; i < proof.public_signal.length - 10; i++) {
-            adjustedPublicSignal[i] = proof.public_signal[i];
-        }
-        transferProof.public_signal = adjustedPublicSignal;
-
-        return transferProof;
-    }
-
-    function convertDepositProofToTransferProof(IEnygmaDvpIntegration.WithdrawOrDepositProof memory proof) internal pure returns (IEnygmaV1.TransferProof memory) {
-        IEnygmaV1.TransferProof memory transferProof;
-        transferProof.pi_a = proof.pi_a;
-        transferProof.pi_b = proof.pi_b;
-        transferProof.pi_c = proof.pi_c;
-
-        // Create a new array without last item (hashCommitment)
         uint256[] memory adjustedPublicSignal = new uint256[](proof.public_signal.length - 1);
-        for (uint256 i = 0; i < proof.public_signal.length - 1; i++) {
+        for (uint256 i = 0; i < adjustedPublicSignal.length; i++) {
             adjustedPublicSignal[i] = proof.public_signal[i];
         }
-
         transferProof.public_signal = adjustedPublicSignal;
-        return transferProof;
     }
 
-    // Deposit verifier array conversions: 8*k + 3
+    // Deposit and withdraw verifier array conversions: 8*k + 3
     // k=2: 19, k=3: 27, k=4: 35, k=5: 43, k=6: 51
     function convertToUint256Array19(uint256[] memory dynamicArray) internal pure returns (uint256[19] memory fixedArray) {
-        require(dynamicArray.length == 19, 'Input array must have exactly 19 elements');
+        if (dynamicArray.length != 19) revert EnygmaDvpIntegration__InvalidPublicSignalLength(dynamicArray.length);
         for (uint256 i = 0; i < 19; i++) {
             fixedArray[i] = dynamicArray[i];
         }
@@ -375,7 +419,7 @@ contract EnygmaDvpIntegration {
     }
 
     function convertToUint256Array27(uint256[] memory dynamicArray) internal pure returns (uint256[27] memory fixedArray) {
-        require(dynamicArray.length == 27, 'Input array must have exactly 27 elements');
+        if (dynamicArray.length != 27) revert EnygmaDvpIntegration__InvalidPublicSignalLength(dynamicArray.length);
         for (uint256 i = 0; i < 27; i++) {
             fixedArray[i] = dynamicArray[i];
         }
@@ -383,7 +427,7 @@ contract EnygmaDvpIntegration {
     }
 
     function convertToUint256Array35(uint256[] memory dynamicArray) internal pure returns (uint256[35] memory fixedArray) {
-        require(dynamicArray.length == 35, 'Input array must have exactly 35 elements');
+        if (dynamicArray.length != 35) revert EnygmaDvpIntegration__InvalidPublicSignalLength(dynamicArray.length);
         for (uint256 i = 0; i < 35; i++) {
             fixedArray[i] = dynamicArray[i];
         }
@@ -391,7 +435,7 @@ contract EnygmaDvpIntegration {
     }
 
     function convertToUint256Array43(uint256[] memory dynamicArray) internal pure returns (uint256[43] memory fixedArray) {
-        require(dynamicArray.length == 43, 'Input array must have exactly 43 elements');
+        if (dynamicArray.length != 43) revert EnygmaDvpIntegration__InvalidPublicSignalLength(dynamicArray.length);
         for (uint256 i = 0; i < 43; i++) {
             fixedArray[i] = dynamicArray[i];
         }
@@ -399,50 +443,8 @@ contract EnygmaDvpIntegration {
     }
 
     function convertToUint256Array51(uint256[] memory dynamicArray) internal pure returns (uint256[51] memory fixedArray) {
-        require(dynamicArray.length == 51, 'Input array must have exactly 51 elements');
+        if (dynamicArray.length != 51) revert EnygmaDvpIntegration__InvalidPublicSignalLength(dynamicArray.length);
         for (uint256 i = 0; i < 51; i++) {
-            fixedArray[i] = dynamicArray[i];
-        }
-        return fixedArray;
-    }
-
-    // Withdraw verifier array conversions: 8*k + 12
-    // k=2: 28, k=3: 36, k=4: 44, k=5: 52, k=6: 60
-    function convertToUint256Array28(uint256[] memory dynamicArray) internal pure returns (uint256[28] memory fixedArray) {
-        require(dynamicArray.length == 28, 'Input array must have exactly 28 elements');
-        for (uint256 i = 0; i < 28; i++) {
-            fixedArray[i] = dynamicArray[i];
-        }
-        return fixedArray;
-    }
-
-    function convertToUint256Array36(uint256[] memory dynamicArray) internal pure returns (uint256[36] memory fixedArray) {
-        require(dynamicArray.length == 36, 'Input array must have exactly 36 elements');
-        for (uint256 i = 0; i < 36; i++) {
-            fixedArray[i] = dynamicArray[i];
-        }
-        return fixedArray;
-    }
-
-    function convertToUint256Array44(uint256[] memory dynamicArray) internal pure returns (uint256[44] memory fixedArray) {
-        require(dynamicArray.length == 44, 'Input array must have exactly 44 elements');
-        for (uint256 i = 0; i < 44; i++) {
-            fixedArray[i] = dynamicArray[i];
-        }
-        return fixedArray;
-    }
-
-    function convertToUint256Array52(uint256[] memory dynamicArray) internal pure returns (uint256[52] memory fixedArray) {
-        require(dynamicArray.length == 52, 'Input array must have exactly 52 elements');
-        for (uint256 i = 0; i < 52; i++) {
-            fixedArray[i] = dynamicArray[i];
-        }
-        return fixedArray;
-    }
-
-    function convertToUint256Array60(uint256[] memory dynamicArray) internal pure returns (uint256[60] memory fixedArray) {
-        require(dynamicArray.length == 60, 'Input array must have exactly 60 elements');
-        for (uint256 i = 0; i < 60; i++) {
             fixedArray[i] = dynamicArray[i];
         }
         return fixedArray;

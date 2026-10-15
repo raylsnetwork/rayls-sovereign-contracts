@@ -1967,16 +1967,16 @@ Used when withdrawing Enygma tokens from a DVP contract.
 
 | Anonymity Set (k) | Public Signals | Verifier Contract |
 |-------------------|----------------|-------------------|
-| k=2 | 28 | `EnygmaWithdrawFromDvpVerifierk2.sol` |
-| k=3 | 36 | `EnygmaWithdrawFromDvpVerifierk3.sol` |
-| k=4 | 44 | `EnygmaWithdrawFromDvpVerifierk4.sol` |
-| k=5 | 52 | `EnygmaWithdrawFromDvpVerifierk5.sol` |
-| k=6 | 60 | `EnygmaWithdrawFromDvpVerifierk6.sol` |
+| k=2 | 19 | `EnygmaWithdrawFromDvpVerifierk2.sol` |
+| k=3 | 27 | `EnygmaWithdrawFromDvpVerifierk3.sol` |
+| k=4 | 35 | `EnygmaWithdrawFromDvpVerifierk4.sol` |
+| k=5 | 43 | `EnygmaWithdrawFromDvpVerifierk5.sol` |
+| k=6 | 51 | `EnygmaWithdrawFromDvpVerifierk6.sol` |
 
-**Formula:** `8k + 12` public signals
+**Formula:** `8k + 3` public signals
 
-Additional public signals compared to Transfer:
-- `Hashes[10]` - 10 signals (deposit commitment hashes for withdrawal verification)
+Additional public signal compared to Transfer:
+- `PaymentCommitment` - 1 signal: the DVP join-split's payment output, which the proof opens with the credited amount. `withdrawFromDvp` requires it to equal the join-split receipt's `commitments[0]`.
 
 #### Enygma DVP Circuits
 

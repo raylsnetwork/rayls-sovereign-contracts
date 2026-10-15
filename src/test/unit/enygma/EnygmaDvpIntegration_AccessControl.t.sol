@@ -196,6 +196,8 @@ contract EnygmaDvpIntegrationAccessControlTest is Test {
      */
     function test_factory_canAddDvp() public {
         vm.prank(factory);
+        vm.expectEmit(true, false, false, false, address(integration));
+        emit IEnygmaDvpIntegration.DvpRegistered(FAKE_DVP);
         bool result = integration.addDvp(FAKE_DVP);
         assertTrue(result);
         assertEq(integration.getDvpAddress(), FAKE_DVP);
@@ -206,6 +208,8 @@ contract EnygmaDvpIntegrationAccessControlTest is Test {
      */
     function test_factory_canSetVaultId() public {
         vm.prank(factory);
+        vm.expectEmit(false, false, false, true, address(integration));
+        emit IEnygmaDvpIntegration.VaultIdSet(FAKE_VAULT_ID);
         bool result = integration.setVaultId(FAKE_VAULT_ID);
         assertTrue(result);
         assertEq(integration.getVaultId(), FAKE_VAULT_ID);
@@ -228,5 +232,47 @@ contract EnygmaDvpIntegrationAccessControlTest is Test {
         assertEq(integration.getVaultId(), FAKE_VAULT_ID);
         assertEq(integration.getDepositToDvpVerifierAddress(2), FAKE_VERIFIER);
         assertEq(integration.getWithdrawFromDvpVerifierAddress(2), FAKE_VERIFIER);
+    }
+
+    // ============================================================
+    // ZERO-ADDRESS TESTS — misconfiguration must fail at registration
+    // ============================================================
+
+    function test_addDepositToDvpVerifier_zeroAddress_reverts() public {
+        vm.prank(factory);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);
+        integration.addDepositToDvpVerifier(address(0), 2);
+    }
+
+    function test_addWithdrawFromDvpVerifier_zeroAddress_reverts() public {
+        vm.prank(factory);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);
+        integration.addWithdrawFromDvpVerifier(address(0), 2);
+    }
+
+    function test_constructor_zeroEnygma_reverts() public {
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);
+        new EnygmaDvpIntegration(address(0), factory);
+    }
+
+    function test_constructor_zeroFactory_reverts() public {
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);
+        new EnygmaDvpIntegration(enygmaV1, address(0));
+    }
+
+    function testFuzz_addVerifiers_unsupportedK_reverts(uint8 k) public {
+        vm.assume(k < 2 || k > 6);
+        vm.startPrank(factory);
+        vm.expectRevert(abi.encodeWithSelector(EnygmaDvpIntegration.EnygmaDvpIntegration__UnsupportedK.selector, k));
+        integration.addDepositToDvpVerifier(FAKE_VERIFIER, k);
+        vm.expectRevert(abi.encodeWithSelector(EnygmaDvpIntegration.EnygmaDvpIntegration__UnsupportedK.selector, k));
+        integration.addWithdrawFromDvpVerifier(FAKE_VERIFIER, k);
+        vm.stopPrank();
+    }
+
+    function test_addDvp_zeroAddress_reverts() public {
+        vm.prank(factory);
+        vm.expectRevert(EnygmaDvpIntegration.EnygmaDvpIntegration__ZeroAddress.selector);
+        integration.addDvp(address(0));
     }
 }
