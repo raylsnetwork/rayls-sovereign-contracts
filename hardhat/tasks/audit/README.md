@@ -2,7 +2,7 @@
 
 Hardhat tasks that verify on-chain AccessManager state, deploy-script integrity, and role grants against current source / ABIs / CTS, on each Rayls chain side.
 
-This README is the **entry point**. The detailed task reference (CLI flags, status tables, env-var conventions, AccessManager access invariant) lives in [`docs/access-manager-migration.md`](../../../docs/access-manager-migration.md). The operator playbook (pre-flight, per-finding triage, CI/CD wiring, CTS-down recovery) lives at [docs.rayls.io](https://docs.rayls.io/deploy/privacy-node/access-manager-audit/).
+This README is the **entry point**. The detailed task reference (CLI flags, status tables, env-var conventions, AccessManager access invariant) lives in [`docs/access-manager-migration.md`](../../../docs/access-manager-migration.md). The operator playbook (pre-flight, per-finding triage, CI/CD wiring, CTS-down recovery) lives at [docs.rayls.com](https://docs.rayls.com/docs/auditing).
 
 ## Tasks at a glance
 
@@ -126,4 +126,4 @@ hardhat/tasks/audit/
 
 - [`docs/access-manager-migration.md`](../../../docs/access-manager-migration.md) — full task reference, env-var conventions, worked migration example, CI integration.
 - [`audit/migrations/README.md`](../../../audit/migrations/README.md) — the migration output directory.
-- [AccessManager Audit guide](https://docs.rayls.io/deploy/privacy-node/access-manager-audit/) — operator playbook.
+- [AccessManager Audit guide](https://docs.rayls.com/docs/auditing) — operator playbook.

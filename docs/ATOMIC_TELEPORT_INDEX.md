@@ -279,10 +279,10 @@ const locked = await tokenHandler.getLockedAmount(userAddress);
 ```
 
 ### **Contacts & Resources**
-- 📧 **Technical Support**: dev-support@rayls.io
+- 📧 **Technical Support**: [info@rayls.com](mailto:info@rayls.com)
 - 💬 **Discord**: #teleport-atomic channel
-- 📖 **Documentation**: docs.rayls.io/teleport-atomic
-- 🐛 **Bug Reports**: github.com/rayls/contracts/issues
+- 📖 **Documentation**: [docs.rayls.com/docs/sending-teleports](https://docs.rayls.com/docs/sending-teleports)
+- 🐛 **Bug Reports**: [github.com/raylsnetwork/rayls-sovereign-contracts/issues](https://github.com/raylsnetwork/rayls-sovereign-contracts/issues)
 
 ---
 
